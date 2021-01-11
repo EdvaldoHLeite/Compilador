@@ -2,6 +2,7 @@
 
 import os.path
 import string
+import re
 
 """
 identificador_
@@ -51,10 +52,8 @@ class AnalisadorLexico():
         return False
     
     def ehLetra(self, entrada):
-        letras = string.ascii_letters
-        if entrada in letras:
-            return True
-        return False                
+        letras = re.compile('[a-zA-Z]')
+        return letras.search(entrada)
         
     def analisar(self):
         arquivo_entrada = open(self.entrada, 'r')
@@ -66,8 +65,8 @@ class AnalisadorLexico():
         # percorre linha por linha
         while linha:
             linha = arquivo_entrada.readline()
-            linha = linha.replace(" ", "")
-            linha.replace("\n", "")
+            #linha = linha.replace(" ", "") 
+            #linha.replace("\n", "")
             numero_linha += 1
             tamanho_linha = len(linha)            
             
@@ -80,7 +79,19 @@ class AnalisadorLexico():
                     
                 #### delimitador ####
                 if self.ehDelimitador(caractere_atual):
-                    arquivo_saida.write("delimitador_"+caractere_atual+"_"+str(numero_linha)+"\n")
+                    if  ('('):
+                        arquivo_saida.write("aParenteses_"+caractere_atual+"_"+str(numero_linha)+"\n")
+                    elif(')'):
+                        arquivo_saida.write("fParenteses_"+caractere_atual+"_"+str(numero_linha)+"\n")
+                    elif('{'):
+                        arquivo_saida.write("aChaves"+caractere_atual+"_"+str(numero_linha)+"\n")
+                    elif('}'):
+                        arquivo_saida.write("fChaves"+caractere_atual+"_"+str(numero_linha)+"\n")
+                    elif(';'):
+                        arquivo_saida.write("pontoVirgula"+caractere_atual+"_"+str(numero_linha)+"\n")
+                    elif(','):
+                        arquivo_saida.write("virgula_"+caractere_atual+"_"+str(numero_linha)+"\n")
+
                 
                 #### operador ####
                 elif self.ehOperador(caractere_atual):
@@ -106,16 +117,16 @@ class AnalisadorLexico():
                         else:
                             break
                             
-                    i_car = i_seguinte # atualiza o indice do caractere atual
+                    i_car = i_seguinte -1 # atualiza o indice do caractere atual
                     arquivo_saida.write("numero_"+numero+"_"+str(numero_linha)+'\n')
                 
                 
                 #### palavras reservadas e identificadores ####
-                '''elif self.ehLetra(caractere_atual):
+                elif self.ehLetra(caractere_atual):
                     texto = caractere_atual
                     
                     i_prox = i_car+1
-                    while i_prox < tamanho_linha: # busca de letras ou digitos, encerra quando chega no final da linha ou encontra qualquer outro tipo de caractere
+                    while i_prox < tamanho_linha and linha[i_prox] != " " and linha[i_prox] != "\n": # busca de letras ou digitos, encerra quando chega no final da linha ou encontra qualquer outro tipo de caractere
                         
                         prox = linha[i_prox]
                         if self.ehLetra(prox) or self.ehDigito(prox):
@@ -123,16 +134,34 @@ class AnalisadorLexico():
                             i_prox += 1
                         else:
                             break
-                    
-                    ### desvios condicionais ###
-                    if "if" in texto:
-                        if ""
-                        arquivo_saida.write("numero_if"+"_"+str(numero_linha)+'\n')'''
-                    
-                    
-                        
-                        
-                    
+
+                    if self.ehReservada(texto):
+                        if  (texto == "if"):
+                            arquivo_saida.write("if_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "else"):
+                            arquivo_saida.write("else_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "ifelse"):
+                            arquivo_saida.write("ifelse_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "while"):
+                            arquivo_saida.write("while_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "break"):
+                            arquivo_saida.write("brak_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "continue"):
+                            arquivo_saida.write("continue_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "return"):
+                            arquivo_saida.write("return_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "true"):
+                            arquivo_saida.write("true_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "false"):
+                            arquivo_saida.write("false_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "bool"):
+                            arquivo_saida.write("bool_"+texto+"_"+str(numero_linha)+'\n')
+                        elif(texto == "int"):
+                            arquivo_saida.write("int_"+texto+"_"+str(numero_linha)+'\n')
+                    else:
+                        arquivo_saida.write("id_"+texto+"_"+str(numero_linha)+'\n')
+                    i_car = i_prox -1
+
                 i_car += 1
         
         arquivo_saida.write("fim")
