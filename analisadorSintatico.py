@@ -77,6 +77,64 @@ class analisadorSintatico():
         self.indice += 1
         return self.listTokens[self.indice]
 
+    #retorna true se o token passado como parametro for um operador boleano
+    def operadorBool(self):
+        token = self.listTokens[self.indice]
+        operadores = "== != > >= < <= = !"
+        if token in operadores.split():
+            return True
+        return False
+
+    #retorna true se o token passado como parametro for umoperador aritimetico
+    def operadorArit(self):
+        token = self.listTokens[self.indice]
+        operadores = "+ - * /"
+        if token in operadores.split():
+            return True
+        return False
+
+    #expressões aritimeticas
+    def expressaoArit(self):
+        token = self.listTokens[self.indice]
+        parenteses = False
+
+        if (token == '('):
+            token = self.nextToken()
+            parenteses == True
+
+        if (token == 'id' or token == 'numero'):
+
+            token = self.nextToken()
+
+            if (self.operadorArit()):
+                token = self.nextToken()
+                if (token == 'id' or token == 'numero'):
+                    token = self.nextToken()
+                    if (parenteses == True):
+                        if (token == ')'):
+                            token = self.nextToken()
+                    if (self.operadorArit()):
+                        self.expressaoArit(self.nextToken())
+                    else:
+                        return True
+                else:
+                    return False    #caso a espressao esteja incompleta
+            else:
+                return True #caso a expressão seja apenas Id
+
+
+    #expressoes boleanas
+    def expressaoBool(self):
+        token = self.nextToken()
+        if(self.expressaoArit() or token == 'true' or token == 'false'):
+            token = self.listTokens[self.indice]
+
+            if(self.operadorBool()):
+                token = self.nextToken()
+                if(self.expressaoArit() or token == 'true' or token == 'false'):
+                    return True
+        return False
+
     #lista de parametros
     def listaParametros(self):
         token = self.listTokens[indice]
@@ -123,27 +181,44 @@ class analisadorSintatico():
         if (token == 'id'):
             token = self.nextToken()
 
-            if (token == '('):
+            if (token == '('):               #se for uma função
                 return self._funcao()        #retornará True caso o sintaxe da função esteja correta
-            elif (token == '='):
+            elif (token == '='):             #se for a atribuição de uma variavel
                 token = self.nextToken()
-
                 if (token == 'numero' or token == 'true' or token == 'false'):
                     token = self.nextToken()
                     if (token == ';'):
                         return True
-        
+            elif(token == ';'):               #se for uma declaração de variavel, sem atribuição
+                return True
         return False
 
     #print
     def _print(self):
-        token = self.nextToken
+        token = self.nextToken()
         if (token == 'id' or token == 'numero'):
             token = self.nextToken()
             if(token == ';'):
                 return True
         return False
-    
+
+    #if
+    def _if(self):
+        token = self.nextToken()
+
+        if (token == '('):
+            if (self.expressaoBool()):
+                token = self.listTokens[self.indice]
+                if (token == ')'):
+                    token = self.nextToken()
+                    if (token == '{'):
+                        token = self.nextToken()
+                        if (self._s()):
+                            token = self.nextToken()
+                            if (token == '}'):
+                                return True
+        return False
+
     def _s(self):
         token = self.listTokens[self.indice]
         if ( token == 'int' or token == 'bool'):        #declarações
@@ -152,14 +227,23 @@ class analisadorSintatico():
             return False
         if (token == 'print'):
             return self._print()
+        
+        if (token == 'if'):
+            return self._if()
+        
         return False
             
 
     def inicio(self):
-        if (self._s() == True): #chamar a função inicial, que irá percorrer os tokens recursivamente
-            print ('SUCESSO na analise!\n')
-        else:
-            print ('ERRO na analise!\n') 
+        while (True):
+            if (self.indice < len(self.listTokens) -1):
+                if (self._s() == False): #chamar a função inicial, que irá percorrer os tokens recursivamente
+                    print ('ERRO na analise!\n') 
+                    break
+                self.nextToken()
+            else:
+                print ('SUCESSO na analise!\n')
+                break
     
         self.arquivo_entrada.close()
         self.arquivo_saida.close()  
