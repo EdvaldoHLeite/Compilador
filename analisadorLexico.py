@@ -34,7 +34,7 @@ class AnalisadorLexico():
     
     # identifica se a entrada eh uma palavra reservada
     def ehReservada(self, entrada):
-        reservadas = "int bool true false return if ifelse else while break continue"
+        reservadas = "int bool true false return if ifelse else while break continue print"
         if entrada in reservadas.split():
             return True
         return False
@@ -79,18 +79,7 @@ class AnalisadorLexico():
                     
                 #### delimitador ####
                 if self.ehDelimitador(caractere_atual):
-                    if  ('('):
-                        arquivo_saida.write("aParenteses_"+caractere_atual+"_"+str(numero_linha)+"\n")
-                    elif(')'):
-                        arquivo_saida.write("fParenteses_"+caractere_atual+"_"+str(numero_linha)+"\n")
-                    elif('{'):
-                        arquivo_saida.write("aChaves"+caractere_atual+"_"+str(numero_linha)+"\n")
-                    elif('}'):
-                        arquivo_saida.write("fChaves"+caractere_atual+"_"+str(numero_linha)+"\n")
-                    elif(';'):
-                        arquivo_saida.write("pontoVirgula"+caractere_atual+"_"+str(numero_linha)+"\n")
-                    elif(','):
-                        arquivo_saida.write("virgula_"+caractere_atual+"_"+str(numero_linha)+"\n")
+                    arquivo_saida.write(caractere_atual+"_"+caractere_atual+"_"+str(numero_linha)+"\n")
 
                 
                 #### operador ####
@@ -99,7 +88,7 @@ class AnalisadorLexico():
                     if caractere_seguinte != None and self.ehOperador(caractere_atual+caractere_seguinte): # operador com dois caracteres como '=='
                         i_car += 1 # o operador tem dois sinais
                         operador = caractere_atual + caractere_seguinte
-                    arquivo_saida.write("operador_"+operador+"_"+str(numero_linha)+"\n")
+                    arquivo_saida.write(operador+"_"+operador+"_"+str(numero_linha)+"\n")
                 
                 
                 ### numero ###
@@ -136,35 +125,13 @@ class AnalisadorLexico():
                             break
 
                     if self.ehReservada(texto):
-                        if  (texto == "if"):
-                            arquivo_saida.write("if_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "else"):
-                            arquivo_saida.write("else_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "ifelse"):
-                            arquivo_saida.write("ifelse_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "while"):
-                            arquivo_saida.write("while_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "break"):
-                            arquivo_saida.write("brak_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "continue"):
-                            arquivo_saida.write("continue_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "return"):
-                            arquivo_saida.write("return_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "true"):
-                            arquivo_saida.write("true_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "false"):
-                            arquivo_saida.write("false_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "bool"):
-                            arquivo_saida.write("bool_"+texto+"_"+str(numero_linha)+'\n')
-                        elif(texto == "int"):
-                            arquivo_saida.write("int_"+texto+"_"+str(numero_linha)+'\n')
+                        arquivo_saida.write(texto+"_"+texto+"_"+str(numero_linha)+'\n')
                     else:
                         arquivo_saida.write("id_"+texto+"_"+str(numero_linha)+'\n')
                     i_car = i_prox -1
 
                 i_car += 1
         
-        arquivo_saida.write("fim")
         arquivo_entrada.close()
         arquivo_saida.close()
     

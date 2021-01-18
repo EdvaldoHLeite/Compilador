@@ -1,0 +1,15 @@
+int a = 41;
+int flag = 52;
+
+if (a==45) {
+	print flag; 
+}
+
+int teste (int a; bool b; int c; int d; bool e){
+	print 2;
+}
+
+bool teste2 (){
+	return 3;
+}
+
