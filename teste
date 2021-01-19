@@ -13,3 +13,6 @@ bool teste2 (){
 	return 3;
 }
 
+while (a!=4){
+    print flag;
+}
