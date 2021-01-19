@@ -281,6 +281,17 @@ class analisadorSintatico():
         self.salvarErro("Erro na chamada de função")
         return False
 
+    def _atribuicao(self):
+        token = self.nextToken()
+        if (token == '='):
+            token = self.nextToken()
+            if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
+                token = self.nextToken()
+                if (token == ';'):
+                    return True
+        self.salvarErro("Erro de atribuição")
+        return False
+
     def _s(self):
         token = self.listTokens[self.indice]
         if ( token == 'int' or token == 'bool'):        #declarações
@@ -311,6 +322,9 @@ class analisadorSintatico():
                 return False
         
         if (token == 'id'):
+            prox_token = self.listTokens[self.indice+1]  
+            if (prox_token == '='):
+                return self._atribuicao()
             return self._chamarFuncao()
             
         self.salvarErro("ERRO na analise!")

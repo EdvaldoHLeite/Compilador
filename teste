@@ -29,5 +29,5 @@ while (a!=4){
     print flag;
     break;
 }
-
+g = false;
 teste2();
