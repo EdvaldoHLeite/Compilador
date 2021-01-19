@@ -234,7 +234,18 @@ class analisadorSintatico():
                                 return True
         self.salvarErro("Erro de desvio condicional")
         return False
-
+    
+    def _else(self):
+        token = self.nextToken()
+        if (token == '{'):
+            token = self.nextToken()
+            if (self._s()):
+                token = self.nextToken()
+                if (token == '}'):
+                    return True
+        self.salvarErro("Erro de desvio condicional")
+        return False
+    
     def _while(self):
         token = self.nextToken()
         if (token == '('):
@@ -264,9 +275,22 @@ class analisadorSintatico():
         
         if (token == 'if'):
             return self._if()
-        
+        if (token == 'ifelse'): # o corpo do if eh parecido
+            return self._if()
+        if (token == 'else'):
+            return self._else()
+            
         if (token == 'while'):
             return self._while()
+        
+        if (token == 'break' or token == 'continue'):
+            token = self.nextToken()
+            
+            if (token == ';'):
+                return True
+            else:
+                salvarErro("Erro de desvio condicional")
+                return False
         
         self.salvarErro("ERRO na analise!")
         return False
