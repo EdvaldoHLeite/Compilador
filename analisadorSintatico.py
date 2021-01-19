@@ -137,7 +137,7 @@ class analisadorSintatico():
 
     #lista de parametros
     def listaParametros(self):
-        token = self.listTokens[indice]
+        token = self.listTokens[self.indice]
 
         if (token == 'int' or token == 'bool'):
             token = self.nextToken()
@@ -160,8 +160,13 @@ class analisadorSintatico():
             token = self.nextToken()
             if (token == '{'):
                 token = self.nextToken()
-                self._s()
-                token = self.nextToken()
+                if(token != 'return' and token != '}'):
+                    self._s()
+                    token = self.nextToken()
+
+                if(token == '}'):
+                    return True
+
                 if  (token == 'return'):
                     token = self.nextToken()
                     if(token == 'id' or token == 'true' or token == 'false' or token == 'numero'):
