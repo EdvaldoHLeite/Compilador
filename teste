@@ -1,18 +1,33 @@
 int a = 41;
 int flag = 52;
 
+teste2();
+
 if (a==45) {
 	print flag; 
+	continue;
+} ifelse (a==34) {
+    print 0;
+    continue;
+} else {
+    print 1;
+    continue;
 }
 
 int teste (int a; bool b; int c; int d; bool e){
 	print 2;
+	continue;
+	break;
 }
 
 bool teste2 (){
+    continue;
 	return 3;
 }
 
 while (a!=4){
     print flag;
+    break;
 }
+
+teste2();

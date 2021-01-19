@@ -168,8 +168,11 @@ class analisadorSintatico():
             if (token == '{'):
                 token = self.nextToken()
                 if(token != 'return' and token != '}'):
-                    self._s()
-                    token = self.nextToken()
+                    while(self._s()):
+                        token = self.nextToken()
+                        if (token == '}'):
+                            break;
+                    #token = self.nextToken()
 
                 if(token == '}'):
                     return True
@@ -228,7 +231,7 @@ class analisadorSintatico():
                     token = self.nextToken()
                     if (token == '{'):
                         token = self.nextToken()
-                        if (self._s()):
+                        while (self._s()):
                             token = self.nextToken()
                             if (token == '}'):
                                 return True
@@ -239,7 +242,7 @@ class analisadorSintatico():
         token = self.nextToken()
         if (token == '{'):
             token = self.nextToken()
-            if (self._s()):
+            while (self._s()):
                 token = self.nextToken()
                 if (token == '}'):
                     return True
@@ -256,11 +259,26 @@ class analisadorSintatico():
                     token = self.nextToken()
                     if (token == '{'):
                         token = self.nextToken()
-                        if (self._s()):
+                        while (self._s()):
                             token = self.nextToken()
                             if (token == '}'):
                                 return True
         self.salvarErro("Erro de laço")
+        return False
+
+    def _chamarFuncao(self):
+        token = self.nextToken()
+        if (token == '('):
+            token = self.nextToken()
+            if (self.listaParametros()):
+                token = self.nextToken()
+                if (token == ')'):
+                    token = self.nextToken()
+                    if (token == ';'):
+                        return True
+                if (token == ';'): #lista de parametros vazi entao o proxim eh o fim do comando
+                    return True
+        self.salvarErro("Erro na chamada de função")
         return False
 
     def _s(self):
@@ -289,9 +307,12 @@ class analisadorSintatico():
             if (token == ';'):
                 return True
             else:
-                salvarErro("Erro de desvio condicional")
+                self.salvarErro("Erro de desvio condicional")
                 return False
         
+        if (token == 'id'):
+            return self._chamarFuncao()
+            
         self.salvarErro("ERRO na analise!")
         return False
             
