@@ -129,7 +129,6 @@ class analisadorSintatico():
                         token = self.nextToken()
                         if (token == '}'):
                             break
-                    #token = self.nextToken()
 
                 if(token == '}'):
                     return True

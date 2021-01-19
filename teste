@@ -2,6 +2,7 @@ int a = 41;
 int flag = 52;
 
 teste2();
+
 if (a==45) {
 	print flag; 
 	continue;
