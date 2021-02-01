@@ -3,12 +3,14 @@ bool flag = true;
 a = 2;
 teste2();
 
+b = teste3(23, 15);
+
 if (a==45) {
 	print flag; 
 	continue;
 }
 
-int teste (){
+int teste (int a, bool b, bool c, int d){
 	print 2;
 	while (a == (2+2-3*4 + (7 + (c + d) *23) - 3) / 5){
 		print 2;
