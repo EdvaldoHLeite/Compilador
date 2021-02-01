@@ -10,7 +10,7 @@ if (a==45) {
 
 int teste (){
 	print 2;
-	while (a == true){
+	while (a == (2+2-3*4 + (7 + (c + d) *23) - 3) / 5){
 		print 2;
 		if (a == true){
 			print 3;

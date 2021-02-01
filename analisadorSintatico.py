@@ -62,8 +62,12 @@ class analisadorSintatico():
         if (token == '('):
             token = self.nextToken()
             self.expressaoArit()
+            token = self.listTokens[self.indice]
             if (token == ')'):
                 token = self.nextToken()
+                if (self.operadorArit()):
+                    token = self.nextToken()
+                    return self.expressaoArit()
                 return True
             return False
 
