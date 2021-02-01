@@ -1,1 +1,3 @@
-ERRO na analise!, linha: 24, token>>return
+ERRO na analise!, linha: 20, token>>}
+Erro de função, linha: 20, token>>}
+Erro de declaração, linha: 20, token>>}

@@ -41,6 +41,7 @@ class analisadorSintatico():
     #retorna true se o token passado como parametro for um operador boleano
     def operadorBool(self):
         token = self.listTokens[self.indice]
+
         operadores = "== != > >= < <= = !"
         if token in operadores.split():
             return True
@@ -57,44 +58,41 @@ class analisadorSintatico():
     #expressões aritimeticas
     def expressaoArit(self):
         token = self.listTokens[self.indice]
-        parenteses = False
 
         if (token == '('):
             token = self.nextToken()
-            parenteses == True
+            self.expressaoArit()
+            if (token == ')'):
+                token = self.nextToken()
+                return True
+            return False
 
-        if (token == 'id' or token == 'numero'):
-
+        elif (token == 'id' or token == 'numero'):
             token = self.nextToken()
-
             if (self.operadorArit()):
                 token = self.nextToken()
-                if (token == 'id' or token == 'numero'):
-                    token = self.nextToken()
-                    if (parenteses == True):
-                        if (token == ')'):
-                            token = self.nextToken()
-                    if (self.operadorArit()):
-                        self.expressaoArit(self.nextToken())
-                    else:
-                        return True
-                else:
-                    self.salvarErro("Erro de expressão aritmética")
-                    return False    #caso a espressao esteja incompleta
-            else:
-                return True #caso a expressão seja apenas Id
+                return self.expressaoArit()
+            return True
+        else:
+            if (token != 'true' and token != 'false'): #se for true ou false, pode ser a chemada em uma expressão boleana
+                self.salvarErro("Erro de expressão aritmética")
+            return False    #caso a espressao esteja incompleta       
+        
 
 
     #expressoes boleanas
     def expressaoBool(self):
         token = self.nextToken()
-        if(self.expressaoArit() or token == 'true' or token == 'false'):
-            token = self.listTokens[self.indice]
-
-            if(self.operadorBool()):
+        if(self.expressaoArit()):
+            if(self.operadorBool()):    #caso o token atual seja um operador boleano
                 token = self.nextToken()
                 if(self.expressaoArit() or token == 'true' or token == 'false'):
+                    if (token == 'true' or token == 'false'):
+                        token = self.nextToken()
                     return True
+        elif (token == 'true' or token == 'false'):
+            return True
+
         self.salvarErro("Erro de expressão booleana")
         return False
 
@@ -124,15 +122,11 @@ class analisadorSintatico():
             token = self.nextToken()
             if (token == '{'):
                 token = self.nextToken()
-                if(token != 'return' and token != '}'):
+                if(token != 'return'):
                     while(self._s()):
                         token = self.nextToken()
-                        if (token == '}'):
+                        if (token == 'return'):
                             break
-                    #token = self.nextToken()
-
-                if(token == '}'):
-                    return True
 
                 if  (token == 'return'):
                     token = self.nextToken()
@@ -142,8 +136,7 @@ class analisadorSintatico():
                             token = self.nextToken()
                             if(token == '}'):
                                 return True 
-                elif(token == '}'): 
-                    return True
+                    
         self.salvarErro("Erro de função")
         return False
 
@@ -244,7 +237,7 @@ class analisadorSintatico():
             token = self.nextToken()
             if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
                 token = self.nextToken()
-                if (token == ';'):
+                if (token == ';'): #corrigir
                     return True
         self.salvarErro("Erro de atribuição")
         return False
