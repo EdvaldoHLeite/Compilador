@@ -2,7 +2,8 @@ int a = 41;
 bool flag = true;
 a = 2;
 teste2();
-if (a==2) {
+
+if (a==45) {
 	print flag; 
 	continue;
 }
