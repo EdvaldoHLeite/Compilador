@@ -1,23 +1,25 @@
 int a = 41;
-int flag = 52;
-
+bool flag = true;
+a = 2;
 teste2();
 
 if (a==45) {
 	print flag; 
 	continue;
-} ifelse (a==34) {
-    print 0;
-    continue;
-} else {
-    print 1;
-    continue;
 }
 
-int teste (int a; bool b; int c; int d; bool e){
+int teste (){
 	print 2;
-	continue;
-	break;
+	while (a == (2+2-3*4 + (7 + (c + d) *23) - 3) / 5){
+		print 2;
+		if (a == true){
+			print 3;
+		} else {
+			print 4;
+		}
+	}
+
+	return true;
 }
 
 bool teste2 (){
@@ -30,4 +32,3 @@ while (a!=4){
     break;
 }
 g = false;
-teste2();

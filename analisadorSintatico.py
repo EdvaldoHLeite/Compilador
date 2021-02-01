@@ -1,49 +1,6 @@
-'''
-LISTA DE TOKENS
-
-(DELIMITADORES)
-aParentese
-fParenteses
-aChaves
-fChaves
-pontoVirgula
-virgula
-
-(OPERADOR)
-operador
-atribuicao
-
-(IDENTIFICADOR)
-id
-
-(DIGITO)
-numero
-
-(RESERVADAS)
-if
-else
-ifelse
-while
-break
-continue
-return
-true
-false
-bool
-int
-'''
-
 import os.path
 import string
 from analisadorLexico import AnalisadorLexico
-
-#criar a pilha
-#iniciar o primeiro elemento da pilha com $
-
-#"criar a tabela" (talvez não seja necessário)
-#Cada estado define se o analisador vai empilhar o proximo token ou reduzir a produção
-#cada estado é uma função
-#ao final da analiza, a pilha deve estar vazia (apenas o simbolo $)
 
 class analisadorSintatico():
     def __init__(self):
@@ -84,6 +41,7 @@ class analisadorSintatico():
     #retorna true se o token passado como parametro for um operador boleano
     def operadorBool(self):
         token = self.listTokens[self.indice]
+
         operadores = "== != > >= < <= = !"
         if token in operadores.split():
             return True
@@ -100,44 +58,45 @@ class analisadorSintatico():
     #expressões aritimeticas
     def expressaoArit(self):
         token = self.listTokens[self.indice]
-        parenteses = False
 
         if (token == '('):
             token = self.nextToken()
-            parenteses == True
+            self.expressaoArit()
+            token = self.listTokens[self.indice]
+            if (token == ')'):
+                token = self.nextToken()
+                if (self.operadorArit()):
+                    token = self.nextToken()
+                    return self.expressaoArit()
+                return True
+            return False
 
-        if (token == 'id' or token == 'numero'):
-
+        elif (token == 'id' or token == 'numero'):
             token = self.nextToken()
-
             if (self.operadorArit()):
                 token = self.nextToken()
-                if (token == 'id' or token == 'numero'):
-                    token = self.nextToken()
-                    if (parenteses == True):
-                        if (token == ')'):
-                            token = self.nextToken()
-                    if (self.operadorArit()):
-                        self.expressaoArit(self.nextToken())
-                    else:
-                        return True
-                else:
-                    self.salvarErro("Erro de expressão aritmética")
-                    return False    #caso a espressao esteja incompleta
-            else:
-                return True #caso a expressão seja apenas Id
+                return self.expressaoArit()
+            return True
+        else:
+            if (token != 'true' and token != 'false'): #se for true ou false, pode ser a chemada em uma expressão boleana
+                self.salvarErro("Erro de expressão aritmética")
+            return False    #caso a espressao esteja incompleta       
+        
 
 
     #expressoes boleanas
     def expressaoBool(self):
         token = self.nextToken()
-        if(self.expressaoArit() or token == 'true' or token == 'false'):
-            token = self.listTokens[self.indice]
-
-            if(self.operadorBool()):
+        if(self.expressaoArit()):
+            if(self.operadorBool()):    #caso o token atual seja um operador boleano
                 token = self.nextToken()
                 if(self.expressaoArit() or token == 'true' or token == 'false'):
+                    if (token == 'true' or token == 'false'):
+                        token = self.nextToken()
                     return True
+        elif (token == 'true' or token == 'false'):
+            return True
+
         self.salvarErro("Erro de expressão booleana")
         return False
 
@@ -167,15 +126,11 @@ class analisadorSintatico():
             token = self.nextToken()
             if (token == '{'):
                 token = self.nextToken()
-                if(token != 'return' and token != '}'):
+                if(token != 'return'):
                     while(self._s()):
                         token = self.nextToken()
-                        if (token == '}'):
-                            break;
-                    #token = self.nextToken()
-
-                if(token == '}'):
-                    return True
+                        if (token == 'return'):
+                            break
 
                 if  (token == 'return'):
                     token = self.nextToken()
@@ -185,8 +140,7 @@ class analisadorSintatico():
                             token = self.nextToken()
                             if(token == '}'):
                                 return True 
-                elif(token == '}'): 
-                    return True
+                    
         self.salvarErro("Erro de função")
         return False
 
@@ -287,7 +241,7 @@ class analisadorSintatico():
             token = self.nextToken()
             if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
                 token = self.nextToken()
-                if (token == ';'):
+                if (token == ';'): #corrigir
                     return True
         self.salvarErro("Erro de atribuição")
         return False
@@ -336,6 +290,11 @@ class analisadorSintatico():
             if (self.indice < len(self.listTokens) -1):
                 if (self._s() == False): #chamar a função inicial, que irá percorrer os tokens recursivamente
                     print ('ERRO na analise!\n') 
+                    self.arquivo_saida.close()  
+                    self.arquivo_saida = open("saida_sintatico", 'r')
+                    erros = self.arquivo_saida.readlines()
+                    for i in erros:
+                        print(i)
                     break
                 self.nextToken()
             else:
