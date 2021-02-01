@@ -99,8 +99,25 @@ class analisadorSintatico():
 
         self.salvarErro("Erro de expressão booleana")
         return False
+    
+    def listaParametrosChamada(self):
+        token = self.listTokens[self.indice]
 
-    #lista de parametros
+        if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
+            token = self.nextToken()
+            if(token == ','):
+                token = self.nextToken()
+                if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
+                    return self.listaParametrosChamada()
+            elif(token == ')'):
+                return True
+        elif(token == ')'):         #lista de parametros vazia
+            return True
+        self.salvarErro("Erro de lista de parametros da chamada da função")
+        return False
+
+
+    #lista de parametros para a declaração de funções
     def listaParametros(self):
         token = self.listTokens[self.indice]
 
@@ -108,7 +125,7 @@ class analisadorSintatico():
             token = self.nextToken()
             if(token == 'id'):
                 token = self.nextToken()
-                if (token == ';'):
+                if (token == ','):
                     token = self.nextToken()
                     if (token == 'int' or 'bool'):  #é verificado novamente para não ser possivel colocar algo do tipo (.... int a;)
                         return self.listaParametros()
@@ -224,13 +241,9 @@ class analisadorSintatico():
         token = self.nextToken()
         if (token == '('):
             token = self.nextToken()
-            if (self.listaParametros()):
+            if (self.listaParametrosChamada()):
                 token = self.nextToken()
-                if (token == ')'):
-                    token = self.nextToken()
-                    if (token == ';'):
-                        return True
-                if (token == ';'): #lista de parametros vazi entao o proxim eh o fim do comando
+                if (token == ';'):
                     return True
         self.salvarErro("Erro na chamada de função")
         return False
@@ -240,8 +253,10 @@ class analisadorSintatico():
         if (token == '='):
             token = self.nextToken()
             if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
+                if (token == 'id' and self._chamarFuncao()):
+                    return True
                 token = self.nextToken()
-                if (token == ';'): #corrigir
+                if (token == ';'):
                     return True
         self.salvarErro("Erro de atribuição")
         return False
