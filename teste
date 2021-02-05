@@ -42,3 +42,7 @@ void procedimento(int a, bool b, int c, int d, bool j){
 		print x;
 	}
 }
+
+procedimento(a, 2, b, 3, quarto, abc1234, a);
+
+

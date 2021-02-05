@@ -14,7 +14,7 @@ class analisadorSintatico():
 
 
     def salvarErro(self, msg):
-        self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice])) + ", token>>"+self.listTokens[self.indice] + '\n')
+        self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
 
     def adicionarTipo(self, token, tipo):
         indice = token[2:]
@@ -292,6 +292,17 @@ class analisadorSintatico():
         self.salvarErro("Erro na chamada de função")
         return False
 
+    def _chamarProcedimento(self):
+        token = self.nextToken()
+        if (token == '('):
+            token = self.nextToken()
+            if (self.listaParametrosChamada()):
+                token = self.nextToken()
+                if (token == ';'):
+                    return True
+        self.salvarErro("Erro na chamada do procedimento")
+        return False
+
     def _atribuicao(self):
         token = self.nextToken()
         if (token == '='):
@@ -338,7 +349,13 @@ class analisadorSintatico():
             prox_token = self.listTokens[self.indice+1]  
             if (prox_token == '='):
                 return self._atribuicao()
-            return self._chamarFuncao()
+            else:
+                for i in self.tabelaSimbolos:
+                    if (i.id == token):
+                        if (i.tipo == 'void'):
+                            return self._chamarProcedimento()
+                        break
+            return self._chamarFuncao()         
             
         self.salvarErro("ERRO na analise!")
         return False
