@@ -36,7 +36,7 @@ class AnalisadorLexico():
     
     # identifica se a entrada eh uma palavra reservada
     def ehReservada(self, entrada):
-        reservadas = "int bool true false return if ifelse else while break continue print"
+        reservadas = "int bool void true false return if ifelse else while break continue print"
         if entrada in reservadas.split():
             return True
         return False

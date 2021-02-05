@@ -34,3 +34,11 @@ while (a!=4){
     break;
 }
 g = false;
+
+void procedimento(int a, bool b, int c, int d, bool j){
+	print 234;
+
+	while(x > 3){
+		print x;
+	}
+}

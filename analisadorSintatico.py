@@ -179,6 +179,19 @@ class analisadorSintatico():
         self.salvarErro("Erro de função")
         return False
 
+    def _procedimento(self):
+        token = self.nextToken()
+        if(self.listaParametros()):
+            token = self.nextToken()
+            if (token == '{'):
+                token = self.nextToken()
+                while(self._s()):
+                    token = self.nextToken()
+                    if (token == '}'):
+                        return True                    
+        self.salvarErro("Erro de procedimento")
+        return False
+
 
     #declaração de variaveis e funções
     def _declaracao(self):
@@ -188,9 +201,11 @@ class analisadorSintatico():
             self.adicionarTipo(token, tipo)  #adiciona o tipo na tabela de simbolos
             token = self.nextToken()
 
-            if (token == '('):               #se for uma função
-                return self._funcao()        #retornará True caso o sintaxe da função esteja correta
-            elif (token == '='):             #se for a atribuição de uma variavel
+            if (token == '('):                  #se for uma função ou um procedimento
+                if (tipo == 'void'):            #caso seja um procedimento
+                    return self._procedimento()   #retornará True caso a sintaxe do procedimento esteja correto
+                return self._funcao()           #retornará True caso a sintaxe da função esteja correta
+            elif (token == '='):                #se for a atribuição de uma variavel
                 token = self.nextToken()
                 if (tipo == 'bool' and self.expressaoBool()):
                     token = self.listTokens[self.indice]
@@ -292,7 +307,7 @@ class analisadorSintatico():
 
     def _s(self):
         token = self.listTokens[self.indice]
-        if ( token == 'int' or token == 'bool'):        #declarações
+        if ( token == 'int' or token == 'bool' or token == 'void'):        #declarações
             if (self._declaracao() == True):
                 return True
             self.salvarErro("Erro de declaração")
