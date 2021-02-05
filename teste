@@ -1,5 +1,5 @@
 int a = 41;
-bool flag = true;
+bool flag = 2 < b;
 a = 2;
 teste2();
 
@@ -34,3 +34,15 @@ while (a!=4){
     break;
 }
 g = false;
+
+void procedimento(int a, bool b, int c, int d, bool j){
+	print 234;
+
+	while(x > 3){
+		print x;
+	}
+}
+
+procedimento(a, 2, b, 3, quarto, abc1234, a);
+
+
