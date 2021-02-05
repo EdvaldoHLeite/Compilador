@@ -18,7 +18,6 @@ class analisadorSintatico():
 
     def adicionarTipo(self, token, tipo):
         indice = token[2:]
-        print(indice)
         self.tabelaSimbolos[int(indice)-1].tipo = tipo
 
     #retorna um token de uma linha
@@ -86,10 +85,11 @@ class analisadorSintatico():
 
         elif (self.isId(token) or token == 'numero'):
             token = self.nextToken()
+            #verificar se id é um inteiro
             if (self.operadorArit()):
                 token = self.nextToken()
                 return self.expressaoArit()
-            return True
+            return True #ja retorna no ;
         else:
             if (token != 'true' and token != 'false'): #se for true ou false, pode ser a chemada em uma expressão boleana
                 self.salvarErro("Erro de expressão aritmética")
@@ -99,13 +99,18 @@ class analisadorSintatico():
 
     #expressoes boleanas
     def expressaoBool(self):
-        token = self.nextToken()
+        token = self.listTokens[self.indice]
         if(self.expressaoArit()):
             if(self.operadorBool()):    #caso o token atual seja um operador boleano
-                token = self.nextToken()
-                if(self.expressaoArit() or token == 'true' or token == 'false'):
+                token = self.listTokens[self.indice]
+                if(token == "=="):
+                    token = self.nextToken()
                     if (token == 'true' or token == 'false'):
                         token = self.nextToken()
+                        return True
+                else:
+                    token = self.nextToken()
+                if(self.expressaoArit()):
                     return True
         elif (token == 'true' or token == 'false'):
             return True
@@ -187,7 +192,12 @@ class analisadorSintatico():
                 return self._funcao()        #retornará True caso o sintaxe da função esteja correta
             elif (token == '='):             #se for a atribuição de uma variavel
                 token = self.nextToken()
-                if ((token == 'numero' and tipo == 'int') or (token == 'true' and tipo == 'bool') or (token == 'false' and tipo == 'bool')):
+                if (tipo == 'bool' and self.expressaoBool()):
+                    token = self.listTokens[self.indice]
+                    if (token == ';'):
+                        return True
+
+                elif ((token == 'numero' and tipo == 'int') or (token == 'true' and tipo == 'bool') or (token == 'false' and tipo == 'bool')):
                     token = self.nextToken()
                     if (token == ';'):
                         return True
@@ -211,10 +221,13 @@ class analisadorSintatico():
         token = self.nextToken()
 
         if (token == '('):
+            token = self.nextToken()
             if (self.expressaoBool()):
                 token = self.listTokens[self.indice]
+                #token = self.nextToken()
                 if (token == ')'):
                     token = self.nextToken()
+
                     if (token == '{'):
                         token = self.nextToken()
                         while (self._s()):
@@ -238,6 +251,7 @@ class analisadorSintatico():
     def _while(self):
         token = self.nextToken()
         if (token == '('):
+            token = self.nextToken()
             ehExpBool = self.expressaoBool()
             if (ehExpBool):
                 token = self.listTokens[self.indice]    

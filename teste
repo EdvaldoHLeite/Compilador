@@ -1,5 +1,5 @@
 int a = 41;
-bool flag = true;
+bool flag = 2 < b;
 a = 2;
 teste2();
 
