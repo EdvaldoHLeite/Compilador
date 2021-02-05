@@ -3,6 +3,7 @@
 import os.path
 import string
 import re
+from identificador import identificador
 
 """
 identificador_
@@ -21,6 +22,7 @@ class AnalisadorLexico():
     def __init__(self):
         self.entrada = "teste"
         self.saida = "tokens_teste"
+        self.tabelaSimbolos = list()
         
     def setEntrada(self, nome_entrada):
         self.entrada = nome_entrada
@@ -127,7 +129,15 @@ class AnalisadorLexico():
                     if self.ehReservada(texto):
                         arquivo_saida.write(texto+"_"+texto+"_"+str(numero_linha)+'\n')
                     else:
-                        arquivo_saida.write("id_"+texto+"_"+str(numero_linha)+'\n')
+                        ident = ""
+                        for i in self.tabelaSimbolos:
+                            if(i.lexema == texto):
+                                ident = i
+                                break
+                        if (ident == ""):
+                            ident = identificador(texto, len(self.tabelaSimbolos) + 1)   #cria um novo identificador
+                            self.tabelaSimbolos.append(ident)
+                        arquivo_saida.write(ident.id+"_"+texto+"_"+str(numero_linha)+'\n')
                     i_car = i_prox -1
 
                 i_car += 1
@@ -137,11 +147,3 @@ class AnalisadorLexico():
     
 lexico = AnalisadorLexico()
 lexico.analisar()
-
-# colocando uma id como "56aa", é erro de sintaxe ou lexico?
-# no if acima se for tratado os ids antes de numeros, este erro não ocorre
-
-                
-                
-        
-        

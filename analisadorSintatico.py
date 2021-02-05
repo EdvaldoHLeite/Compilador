@@ -38,6 +38,11 @@ class analisadorSintatico():
         self.indice += 1
         return self.listTokens[self.indice]
 
+    def isId(self, text):
+        if (text[0:2] == 'id'):
+            return True
+        return False
+
     #retorna true se o token passado como parametro for um operador boleano
     def operadorBool(self):
         token = self.listTokens[self.indice]
@@ -71,7 +76,7 @@ class analisadorSintatico():
                 return True
             return False
 
-        elif (token == 'id' or token == 'numero'):
+        elif (self.isId(token) or token == 'numero'):
             token = self.nextToken()
             if (self.operadorArit()):
                 token = self.nextToken()
@@ -103,11 +108,11 @@ class analisadorSintatico():
     def listaParametrosChamada(self):
         token = self.listTokens[self.indice]
 
-        if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
+        if (self.isId(token) or token == 'numero' or token == 'true' or token == 'false'):
             token = self.nextToken()
             if(token == ','):
                 token = self.nextToken()
-                if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
+                if (self.isId(token) or token == 'numero' or token == 'true' or token == 'false'):
                     return self.listaParametrosChamada()
             elif(token == ')'):
                 return True
@@ -123,7 +128,7 @@ class analisadorSintatico():
 
         if (token == 'int' or token == 'bool'):
             token = self.nextToken()
-            if(token == 'id'):
+            if(self.isId(token)):
                 token = self.nextToken()
                 if (token == ','):
                     token = self.nextToken()
@@ -151,7 +156,7 @@ class analisadorSintatico():
 
                 if  (token == 'return'):
                     token = self.nextToken()
-                    if(token == 'id' or token == 'true' or token == 'false' or token == 'numero'):
+                    if(self.isId(token) or token == 'true' or token == 'false' or token == 'numero'):
                         token = self.nextToken()
                         if (token == ';'):
                             token = self.nextToken()
@@ -165,7 +170,7 @@ class analisadorSintatico():
     #declaração de variaveis e funções
     def _declaracao(self):
         token = self.nextToken()
-        if (token == 'id'):
+        if (self.isId(token)):
             token = self.nextToken()
 
             if (token == '('):               #se for uma função
@@ -184,7 +189,7 @@ class analisadorSintatico():
     #print
     def _print(self):
         token = self.nextToken()
-        if (token == 'id' or token == 'numero'):
+        if (self.isId(token) or token == 'numero'):
             token = self.nextToken()
             if(token == ';'):
                 return True
@@ -252,8 +257,8 @@ class analisadorSintatico():
         token = self.nextToken()
         if (token == '='):
             token = self.nextToken()
-            if (token == 'id' or token == 'numero' or token == 'true' or token == 'false'):
-                if (token == 'id' and self._chamarFuncao()):
+            if (self.isId(token) or token == 'numero' or token == 'true' or token == 'false'):
+                if (self.isId(token) and self._chamarFuncao()):
                     return True
                 token = self.nextToken()
                 if (token == ';'):
@@ -290,7 +295,7 @@ class analisadorSintatico():
                 self.salvarErro("Erro de desvio condicional")
                 return False
         
-        if (token == 'id'):
+        if (self.isId(token)):
             prox_token = self.listTokens[self.indice+1]  
             if (prox_token == '='):
                 return self._atribuicao()
