@@ -4,6 +4,9 @@ from analisadorLexico import AnalisadorLexico
 
 class analisadorSintatico():
     def __init__(self):
+        lexico = AnalisadorLexico()
+        lexico.analisar()
+        self.tabelaSimbolos = lexico.tabelaSimbolos
         self.arquivo_entrada = open("tokens_teste", 'r')
         self.arquivo_saida = open("saida_sintatico", 'w')
         self.listTokens, self.tokensLinhas = self.getListTokens()
@@ -12,6 +15,11 @@ class analisadorSintatico():
 
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice])) + ", token>>"+self.listTokens[self.indice] + '\n')
+
+    def adicionarTipo(self, token, tipo):
+        indice = token[2:]
+        print(indice)
+        self.tabelaSimbolos[int(indice)-1].tipo = tipo
 
     #retorna um token de uma linha
     def getToken(self, linha):
@@ -169,15 +177,17 @@ class analisadorSintatico():
 
     #declaração de variaveis e funções
     def _declaracao(self):
+        tipo = self.listTokens[self.indice]
         token = self.nextToken()
         if (self.isId(token)):
+            self.adicionarTipo(token, tipo)  #adiciona o tipo na tabela de simbolos
             token = self.nextToken()
 
             if (token == '('):               #se for uma função
                 return self._funcao()        #retornará True caso o sintaxe da função esteja correta
             elif (token == '='):             #se for a atribuição de uma variavel
                 token = self.nextToken()
-                if (token == 'numero' or token == 'true' or token == 'false'):
+                if ((token == 'numero' and tipo == 'int') or (token == 'true' and tipo == 'bool') or (token == 'false' and tipo == 'bool')):
                     token = self.nextToken()
                     if (token == ';'):
                         return True
@@ -324,7 +334,6 @@ class analisadorSintatico():
         self.arquivo_entrada.close()
         self.arquivo_saida.close()  
 
-lexico = AnalisadorLexico()
-lexico.analisar()
+
 analisador = analisadorSintatico()
 analisador.inicio()
