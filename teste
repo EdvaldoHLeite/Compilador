@@ -1,16 +1,4 @@
-int a = 41;
-bool flag = 2 < b;
-a = 2;
-teste2();
-
-b = teste3(23, 15);
-
-if (a==45) {
-	print flag; 
-	continue;
-}
-
-int teste (int a, bool b, bool c, int d){
+int teste (int a, bool b, int c, int d){
 	print 2;
 	while (a == (2+2-3*4 + (7 + (c + d) *23) - 3) / 5){
 		print 2;
@@ -29,19 +17,34 @@ bool teste2 (){
 	return 3;
 }
 
-while (a!=4){
-    print flag;
-    break;
+int teste3(){
+	return 2;
 }
-g = false;
 
 void procedimento(int a, bool b, int c, int d, bool j){
 	print 234;
 
-	while(x > 3){
+	while(d > 3){
 		print x;
 	}
 }
+
+int a = 5 + 6 - 7 * (10 - 8 / 2) + 5;
+bool flag = a < 3;
+a = 2;
+teste2();
+int b = teste();
+
+if (a==45) {
+	print flag; 
+	continue;
+}
+
+while (a!=4){
+    print flag;
+    break;
+}
+bool g = false;
 
 procedimento(a, 2, b, 3, quarto, abc1234, a);
 
