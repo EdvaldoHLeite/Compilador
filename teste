@@ -41,7 +41,7 @@ int p = teste3() + 6 - 7 * (10 - 8 / 2) + 5;
 bool flag = teste3() < 3;
 p = 2;
 teste2();
-int h = teste(p, false, 3, 4);
+int h = teste(p, false, teste3(), 4);
 
 if (p==45) {
 	print flag; 
@@ -59,4 +59,4 @@ if (true == teste2()){
 	print p;
 }
 
-procedimento(p, true, h, 3, g);
+procedimento(p, true, h, 3, teste2());
