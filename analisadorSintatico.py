@@ -235,12 +235,18 @@ class analisadorSintatico():
         
         if (i < len(lista)):
             tipo  = self.tabelaSimbolos[lista[i]].tipo
-            flag1 = self.isId(token) and self.getTipoId(token) == tipo and self.isContextoValido(self.getContexto(token)) 
+            flag  = self.isId(token) and self.getTipoId(token) == tipo
+            flag1 = flag and self.isContextoValido(self.getContexto(token)) 
             flag2 = token == 'numero' and tipo == 'int'
             flag3 = tipo == 'bool' and (token == 'true' or token == 'false')
+            flag4 = flag and self.isFunction(token)
 
-            if (flag1 or flag2 or flag3):
-                token = self.nextToken()
+            if (flag1 or flag2 or flag3 or flag4):
+                if(flag4):
+                    self._chamarFuncao()
+                    token = self.listTokens[self.indice]
+                else:
+                    token = self.nextToken()
                 i += 1
                 if(token == ','):
                     token = self.nextToken()
@@ -445,7 +451,6 @@ class analisadorSintatico():
             token = self.listTokens[self.indice]
         if (token == ';'):
             return True
-        print(self.listTokens[self.indice])
         self.salvarErro("Erro de atribuição")
         return False
 
