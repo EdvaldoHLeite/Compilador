@@ -10,11 +10,15 @@ class analisadorSintatico():
         self.tabelaSimbolos = lexico.tabelaSimbolos
         self.arquivo_entrada = open("tokens_teste", 'r')
         self.arquivo_saida = open("saida_sintatico", 'w')
+        self.codigo_intermediario = open("codigo_intermediario", 'w')
         self.listTokens, self.tokensLinhas = self.getListTokens()
         self.indice = 0
         self.contexto = ''
         self.contextoPrincipal = '0'
         self.indiceContexto = 0
+        self.intermediario = ''
+        self.tmp1, self.tmp2, self.tmp3, self.op = '', '', '', ''
+        self.indiceTemp = 0
 
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
@@ -160,30 +164,34 @@ class analisadorSintatico():
         flag  = self.isId(token) and self.getTipoId(token) == 'int'
         flag1 = flag and self.isContextoValido(self.getContexto(token))
         flag2 = flag and self.isFunction(token)
+        valor = ''
         if (token == '('):
             token = self.nextToken()
-            self.expressaoArit()
+            valor = self.expressaoArit()[1]
             token = self.listTokens[self.indice]
             if (token == ')'):
                 token = self.nextToken()
                 if (self.operadorArit()):
+                    self.codeInterm(self.listTokens[self.indice])
                     token = self.nextToken()
                     return self.expressaoArit()
-                return True
-            return False
+                return True, valor
+            return False, ''
         elif (flag1 or flag2 or token == 'numero'):
             if (flag2):
                 self._chamarFuncao()
             else:
+                self.codeInterm(token)
                 token = self.nextToken()
             if (self.operadorArit()):
+                self.codeInterm(token)
                 self.nextToken()
                 return self.expressaoArit() 
-            return True #ja retorna no ;
+            return True, valor #ja retorna no ;
         else:
             if (token != 'true' and token != 'false' and not(self.isFunction(token) and self.getTipoId(token) == 'bool')): #se for true ou false, pode ser a chemada em uma expressão boleana
                 self.salvarErro("Erro de expressão aritmética")
-            return False    #caso a espressao esteja incompleta       
+            return False, ''    #caso a espressao esteja incompleta       
         
     #expressoes boleanas
     def expressaoBool(self):
@@ -298,7 +306,19 @@ class analisadorSintatico():
 
                 if  (token == 'return'):
                     token = self.nextToken()
-                    if(self.isId(token) or token == 'true' or token == 'false' or token == 'numero'):
+                    tipo = self.getTipoId(tokenFunc)    #tipo recebe o tipo da função
+                    tokenId = False                     #flag para identificar se o retorno é um id
+                    tipoToken = ''                      #tipo do id que esta sendo retornado
+                    flag1 = (tipo == 'bool' and (token == 'true' or token == 'false'))
+                    flag2 = tipo == 'int' and token == 'numero'
+
+                    if(self.isId(token)):                   #se o token for um identificador
+                        tipoToken = self.getTipoId(token)   #tipoToken recebe o tipo do identificador
+                        tokenId = True                      #identifica que o retorno é um id
+                    if((tokenId == True and tipo == tipoToken) or flag1 or flag2):
+                        if(tokenId and not self.isContextoValido(self.getContexto(token))):  #se a variavel nao esta em um contexto valido
+                            self.salvarErro("Erro de função. Variavel retorna não foi declarada no escopo da função")
+                            return False
                         token = self.nextToken()
                         if (token == ';'):
                             token = self.nextToken()
@@ -328,10 +348,11 @@ class analisadorSintatico():
     def _declaracao(self):
         tipo = self.listTokens[self.indice]
         token = self.nextToken()
-        tokenId = token
+        tokenId = token #id do token que será atribuido
+        self.codeInterm('temp'+str(self.indiceTemp))
+        self.indiceTemp += 1
         if (self.isId(token)):
             self.adicionarTipo(token, tipo)                     #adiciona o tipo na tabela de simbolos
-            inicialToken = token                                #token do identificador                   
             token = self.nextToken()
             if (token == '('):                                                         #se for uma função ou um procedimento.
                 if (self.contexto == self.contextoPrincipal or self.contexto == ''):   #se estiver no contexto principal                                           
@@ -339,14 +360,13 @@ class analisadorSintatico():
                     self.incrementarContexto()                  #incrementa o contexto
                     self.adicionarContexto(tokenId)             #adiciona o contexto na tabela de simbolos
                     if (tipo == 'void'):                        #caso seja um procedimento
-                        return self._procedimento(inicialToken) #retornará True caso a sintaxe do procedimento esteja correto.
-                    self.setFunctionTrue(inicialToken)          #caso não seja um procedimento, adiciona funcao = true para este token na tabela de simbolos
-                    return self._funcao(inicialToken)           #retornará True caso a sintaxe da função esteja correta
-                else:
-                    print ('deu ruim')
+                        return self._procedimento(tokenId)      #retornará True caso a sintaxe do procedimento esteja correto.
+                    self.setFunctionTrue(tokenId)               #caso não seja um procedimento, adiciona funcao = true para este token na tabela de simbolos
+                    return self._funcao(tokenId)                #retornará True caso a sintaxe da função esteja correta
             elif (token == '='):                                #se for a atribuição de uma variavel
                 self.adicionarContexto(tokenId)                 #adiciona o contexto na tabela de simbolos
-                return self._atribuicao(tipo)                   #chama a atribuição
+                self.codeInterm(token)
+                return self._atribuicao(tipo, tokenId)          #chama a atribuição
             elif(token == ';'):                                 #se for uma declaração de variavel, sem atribuição
                 self.adicionarContexto()                        #adiciona o contexto na tabela de simbolos
                 return True                                     #retorna true (declaração sem atribuição)
@@ -356,7 +376,18 @@ class analisadorSintatico():
     #print
     def _print(self):
         token = self.nextToken()
-        if (self.isId(token) or token == 'numero'):
+        toknId = False
+        flag = False
+
+        if (self.isId(token)):
+            tokenId = True
+            if (self.isContextoValido(self.getContexto(token))):
+                flag = True
+            else:
+                print('contexto invalido')
+
+
+        if (flag == True or token == 'numero'):
             token = self.nextToken()
             if(token == ';'):
                 return True
@@ -441,15 +472,51 @@ class analisadorSintatico():
         self.salvarErro("Erro na chamada do procedimento")
         return False
 
-    def _atribuicao(self, tipo):
+    def escreverIntermediario(self):                                    
+        self.codigo_intermediario.writelines(self.tmp1+':='+self.tmp2+self.op+self.tmp3+'\n')   #escreve o codigo no arquivo
+        self.tmp1 = ''
+        self.tmp2 = ''
+        self.tmp3 = '' 
+
+    def codeInterm(self, token):
+        flag1 = self.tmp1 != ''
+        flag2 = self.tmp2 != ''
+        flag3 = self.tmp3 != ''
+
+        i = self.intermediario.split(' ')
+        if (token == ';' or  (flag1 and flag2 and flag3)):
+            self.escreverIntermediario()
+
+        if (token != ';'):
+            if(self.tmp1 == ''):
+                self.tmp1 = token
+            elif(self.tmp2 == ''):
+                self.tmp2 = token
+            elif(self.op == ''):
+                self.tmp3 = token
+            elif(self.tmp3 == ''):
+                self.tmp3 = token
+
+    def setValor(self, token, valor):
+        for i in self.tabelaSimbolos:
+            if i.id == token:
+                i.valor = valor
+
+    def _atribuicao(self, tipo, tokenId):
         token = self.nextToken()
+        flag = False
+        self.codeInterm(tokenId)
+        valor = ''
+
         if (tipo == 'bool'):
-            self.expressaoBool()
+            flag = self.expressaoBool()
             token = self.listTokens[self.indice]
         elif (tipo == 'int'):
-            self.expressaoArit()   
+            flag, valor = self.expressaoArit()   
             token = self.listTokens[self.indice]
-        if (token == ';'):
+        if (token == ';' and flag == True):
+            self.codeInterm(tokenId)
+            self.setValor(tokenId, valor)
             return True
         self.salvarErro("Erro de atribuição")
         return False
@@ -491,7 +558,7 @@ class analisadorSintatico():
             if (prox_token == '='):
                 if (self.isContextoValido(self.getContexto(token))):
                     token = self.nextToken()
-                    return self._atribuicao(tipo)
+                    return self._atribuicao(tipo, self.listTokens[self.indice-1])
             else:
                 for i in self.tabelaSimbolos:                       #pesquisa o token na tabela de simbolos
                     if (i.id == token):                             #caso o identificador ja tenha sido declarado
@@ -532,7 +599,7 @@ class analisadorSintatico():
         self.arquivo_saida.close()  
 
         for i in self.tabelaSimbolos:
-            print(i.lexema+' ----- contexto = ' +i.contexto)
+            print(i.lexema+' ----- valor = ' +i.valor)
 
 analisador = analisadorSintatico()
 analisador.inicio()

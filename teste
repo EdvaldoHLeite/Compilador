@@ -1,3 +1,4 @@
+int variavel = 2 + 2;
 int teste (int a, bool b, int c, int d){
 	print 2;
 	while (a == (2+2-3*4 + (7 + a * (c + d) *23) - 3) / 5){
@@ -14,15 +15,15 @@ int teste (int a, bool b, int c, int d){
 	
 	if(a < c){
 		print a;
-		print var;
+		print c;
 	}
 
-	return true;
+	return a;
 }
 
 bool teste2 (){
     continue;
-	return 3;
+	return true;
 }
 
 int teste3(){
@@ -33,7 +34,7 @@ void procedimento(int a, bool b, int c, int d, bool j){
 	print 234;
 
 	while(d > 3){
-		print x;
+		print a;
 	}
 }
 
