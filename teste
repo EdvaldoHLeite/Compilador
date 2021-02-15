@@ -22,7 +22,6 @@ int teste (int a, bool b, int c, int d){
 }
 
 bool teste2 (){
-    continue;
 	return true;
 }
 
@@ -46,7 +45,6 @@ int h = teste(p, false, teste3(), 4);
 
 if (p==45) {
 	print flag; 
-	continue;
 }
 
 while (p!=4){

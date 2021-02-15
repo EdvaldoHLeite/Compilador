@@ -19,6 +19,7 @@ class analisadorSintatico():
         self.intermediario = ''
         self.tmp1, self.tmp2, self.tmp3, self.op = '', '', '', ''
         self.indiceTemp = 0
+        self.isWhile = False
 
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
@@ -354,7 +355,7 @@ class analisadorSintatico():
         if (self.isId(token)):
             self.adicionarTipo(token, tipo)                     #adiciona o tipo na tabela de simbolos
             token = self.nextToken()
-            if (token == '('):                                                         #se for uma função ou um procedimento.
+            if (token == '(' and self.isWhile == False):        #se for uma função ou um procedimento e nao estaja dentro de um while.
                 if (self.contexto == self.contextoPrincipal or self.contexto == ''):   #se estiver no contexto principal                                           
                     self.contexto = ''
                     self.incrementarContexto()                  #incrementa o contexto
@@ -428,6 +429,7 @@ class analisadorSintatico():
         self.salvarErro("Erro de desvio condicional")
         return False
     
+
     def _while(self):
         token = self.nextToken()
         self.incrementarContexto()
@@ -440,9 +442,12 @@ class analisadorSintatico():
                     token = self.nextToken()
                     if (token == '{'):
                         token = self.nextToken()
+                        self.isWhile = True
                         while (self._s()):
+                            self.isWhile = True
                             token = self.nextToken()
                             if (token == '}'):
+                                self.isWhile = False
                                 self.decrementaContexto()
                                 return True
         self.salvarErro("Erro de laço")
@@ -543,11 +548,15 @@ class analisadorSintatico():
         if (token == 'while'):
             return self._while()
         
-        if (token == 'break' or token == 'continue'):
+        if (token == 'break' or token == 'continue' ):
             token = self.nextToken()
             
             if (token == ';'):
-                return True
+                if(self.isWhile):
+                    return True
+                else:
+                    self.salvarErro("Erro de desvio condicional. Uso fora do loop!")
+                    return False
             else:
                 self.salvarErro("Erro de desvio condicional")
                 return False
