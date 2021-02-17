@@ -15,6 +15,7 @@ class analisadorSintatico():
         self.contexto = ''
         self.contextoPrincipal = '0'
         self.indiceContexto = 0
+        self.contadorWhile = 0 # contador de whiles para validar um desvio condicional
 
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
@@ -413,6 +414,7 @@ class analisadorSintatico():
                             token = self.nextToken()
                             if (token == '}'):
                                 self.decrementaContexto()
+                                self.contadorWhile -= 1
                                 return True
         self.salvarErro("Erro de laço")
         return False
@@ -474,15 +476,16 @@ class analisadorSintatico():
             return self._else()
             
         if (token == 'while'):
+            self.contadorWhile += 1
             return self._while()
         
         if (token == 'break' or token == 'continue'):
             token = self.nextToken()
             
-            if (token == ';'):
+            if (token == ';') and self.contadorWhile >= 1:
                 return True
             else:
-                self.salvarErro("Erro de desvio condicional")
+                self.salvarErro("Erro de desvio incondicional")
                 return False
         
         if (self.isId(token)):
