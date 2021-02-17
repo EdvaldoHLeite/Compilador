@@ -1,26 +1,16 @@
-temp0:==id1
-numero:=+numero
-id1:=temp1id3
-numero:=+numero
--:=numero*
-numero:=+numero
-+:=id3*
-id5:=+id6
-*:=numero-
-numero:=/numero
-temp2:==id7
-numero:=id7id3
-id3:=id5temp3
-temp4:=temp5id6
-numero:=temp6=
-id12:=id9numero
--:=numero*
-numero:=-numero
-/:=numero+
-numero:=id12temp7
-=:=id13numero
-id13:=id12numero
-id12:=temp8=
-id14:=id14id12
-numero:=id12numero
-temp9:==id15
+tmp0 := 2 + 2
+id1 := tmp0
+tmp1 := 3 - 3
+id2 := tmp1
+tmp2 := 5 + 4
+tmp3 := id2 * 3
+tmp4 := tmp3 / 2
+tmp5 := id1 + tmp4
+tmp6 := tmp5 - tmp2
+id3 := tmp6
+id9 := 10
+tmp7 := 2 / 5
+tmp8 := 8 - tmp7
+tmp9 := 10 * tmp8
+tmp10 := 7 - tmp9
+id14 := 2
