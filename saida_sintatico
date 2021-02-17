@@ -1,4 +1,5 @@
-Erro na formação da expressão. Erro ao tentar escrever codigo intermediario, linha: 49, token>>numero
-Erro na formação da expressão. Erro ao tentar escrever codigo intermediario, linha: 50, token>>numero
-Erro na formação da expressão. Erro ao tentar escrever codigo intermediario, linha: 53, token>>)
-Erro na formação da expressão. Erro ao tentar escrever codigo intermediario, linha: 64, token>>false
+Erro de lista de parametros da chamada da função ou procedimento, linha: 31, token>>(
+Erro na chamada de função, linha: 31, token>>(
+Erro na formação da expressão. Erro ao tentar escrever codigo intermediario, linha: 31, token>>(
+Erro de função, linha: 31, token>>(
+Erro de declaração, linha: 31, token>>(

@@ -20,7 +20,7 @@ int teste (int a, bool b, int c, int d){
 		print c;
 	}
 
-	return a;
+	return 2 + 2;
 }
 
 bool teste2 (){
@@ -28,7 +28,7 @@ bool teste2 (){
 }
 
 int teste3(){
-	return 2;
+	return teste(a, b, c, d) + 1;
 }
 
 void procedimento(int a, bool b, int c, int d, bool j){

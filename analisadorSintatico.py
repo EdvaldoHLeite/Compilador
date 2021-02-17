@@ -400,28 +400,23 @@ class analisadorSintatico():
                 if  (token == 'return'):
                     token = self.nextToken()
                     tipo = self.getTipoId(tokenFunc)    #tipo recebe o tipo da função
-                    tokenId = False                     #flag para identificar se o retorno é um id
-                    tipoToken = ''                      #tipo do id que esta sendo retornado
-                    flag1 = (tipo == 'bool' and (token == 'true' or token == 'false'))
-                    flag2 = tipo == 'int' and token == 'numero'
+                    ident = list()
+                    simbol = list()
 
-                    if(self.isId(token)):                   #se o token for um identificador
-                        tipoToken = self.getTipoId(token)   #tipoToken recebe o tipo do identificador
-                        tokenId = True                      #identifica que o retorno é um id
-                    if((tokenId == True and tipo == tipoToken) or flag1 or flag2):
-                        if(tokenId):
-                            if(not self.isContextoValido(self.getContexto(token))):  #se a variavel nao esta em um contexto valido
-                                self.salvarErro("Erro de função. Variavel retorna não foi declarada no escopo da função")
-                                return False
-                            else:
-                                self.setValor(tokenFunc, self.getValor(token))#seta o valor do token como o valor da função na tabela de simbolos
+                    if (tipo == 'bool'):
+                        self.expressaoBool()
+                            
+                    if(tipo == 'int'):
+                        self.expressaoArit( ident, simbol)
+                        self.codeIntermExpArit(tokenFunc, ident, simbol, 0)
+                        
+                    token = self.listTokens[self.indice]
 
+                    if (token == ';'):
                         token = self.nextToken()
-                        if (token == ';'):
-                            token = self.nextToken()
-                            if(token == '}'):
-                                self.decrementaContexto()
-                                return True 
+                        if(token == '}'):
+                            self.decrementaContexto()
+                            return True 
                     
         self.salvarErro("Erro de função")
         return False
@@ -585,7 +580,7 @@ class analisadorSintatico():
             flag  = self.expressaoArit(ident, simbol)   
             token = self.listTokens[self.indice]
         if (token == ';' and flag == True):
-            self.codeIntermExpArit(tokenId, ident, simbol, 0)
+            self.codeIntermExpArit(tokenId, ident, simbol, 0)   #ident e simbol são preenchidos em expressaoArit
             return True
         self.salvarErro("Erro de atribuição")
         return False
