@@ -27,8 +27,8 @@ bool teste2 (){
 	return true;
 }
 
-int teste3(){
-	return teste(a, b, c, d) + 1;
+int teste3(){	
+	return 1;
 }
 
 void procedimento(int a, bool b, int c, int d, bool j){
@@ -46,9 +46,8 @@ void procedimento(int a, bool b, int c, int d, bool j){
 	}
 }
 
-int p = teste3() + 6 - 7 * (10 - 8 / 2) + 5;
+int p = 6 - 7 * (10 - 8 / 2) + 5;
 bool flag = teste3() < 3;
-p = 2;
 teste2();
 int h = teste(p, false, teste3(), 4);
 

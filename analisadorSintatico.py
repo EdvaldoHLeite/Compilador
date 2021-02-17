@@ -180,6 +180,7 @@ class analisadorSintatico():
                 simbol.append(token)
                 token = self.nextToken()
                 if (self.operadorArit()):
+                    simbol.append(token)
                     token = self.nextToken()
                     return self.expressaoArit(ident, simbol)
                 return True
@@ -187,6 +188,7 @@ class analisadorSintatico():
         elif (flag1 or flag2 or token == 'numero'):
             if (flag2):                                             #caso seja uma função
                 self._chamarFuncao()
+                ident.append(self.getValor(token))
             else:
                 if(flag1):                      #caso seja um identificador                           
                     ident.append(token)         #adiciona o identificador
@@ -204,41 +206,47 @@ class analisadorSintatico():
             return False, ''    #caso a espressao esteja incompleta       
         
     #expressoes boleanas
-    def expressaoBool(self):
+    def expressaoBool(self, ident, simbol):
         token = self.listTokens[self.indice]
         flag  = self.isId(token) and self.getTipoId(token) == 'bool'
         flag1 = flag and self.isContextoValido(self.getContexto(token)) #identificador do tipo booleano em um contexto valido
         flag2 = flag and self.isFunction(token)                         #função que retorna um booleano
         i     = self.indice 
-        ident  = list()
-        simbol = list()
-        if(self.expressaoArit(ident, simbol)):
-            if(self.operadorBool()):    #caso o token atual seja um operador boleano
+
+        if(self.expressaoArit(ident, simbol)):#se o primeiro termo for uma expressão aritmetica
+            if(self.operadorBool()):                                    #caso o token atual seja um operador boleano
                 token = self.listTokens[self.indice]
+                simbol.append(token)
                 if(token == "=="):
                     token = self.nextToken()
                     if (token == 'true' or token == 'false'):
+                        ident.append(token)
                         token = self.nextToken()
-                        return True
+                        return True                        
                 else:
                     token = self.nextToken()
                 if(self.expressaoArit(ident, simbol)):
                     return True
         
-        if (flag1 or flag2 or token == 'true' or token == 'false'):
-            if(flag2):
-                self._chamarFuncao()
-            else:
-                token = self.nextToken()
+        if (flag1 or flag2 or token == 'true' or token == 'false'):#se o primeiro termo for um identificador boleano ou true ou false
+            ident.append(token)
+            if(flag2):                                  #se for uma função
+                self._chamarFuncao()                    #chama a função
+                token = self.listTokens[self.indice]    #token recebebe o token atual
+            else:#caso seja uma variavel boleana ou true ou false
+                token = self.nextToken()#token recebe o proximo token
 
-            if (self.operadorBool()):
-                token = self.nextToken()
+            if (self.operadorBool()):#se for um operador boleano
+                simbol.append(token)    #adiciona o simbolo boelano na tabela
+                token = self.nextToken() #passa para o proximo token
                 flag  = self.isId(token) and self.getTipoId(token) == 'bool'
                 flag1 = flag and self.isContextoValido(self.getContexto(token)) #identificador do tipo booleano em um contexto valido
                 flag2 = flag and self.isFunction(token)                         #função que retorna um booleano
                 if (flag1 or flag2 or token == 'true' or token == 'false'):
+                    ident.append(token)
                     if(flag2):
                         self._chamarFuncao()
+                        token = self.listTokens[self.indice]
                     else:
                         token = self.nextToken()
                     return True
@@ -308,6 +316,7 @@ class analisadorSintatico():
     def escreverIntermediarioAtribuicao(self, variavel, temp):
         self.codigo_intermediario.writelines(variavel+' := '+temp+'\n')
         self.setValor(variavel, temp)
+        print(variavel, temp)
     
     #usado durante a expressão
     def escreverIntermediario(self, esq, sim, dire):  
@@ -358,6 +367,8 @@ class analisadorSintatico():
 
         while (i < len(simbol)):
             if (simbol[i] == '+' or simbol[i] == '-'):
+                print (simbol)
+                print (ident)
                 if (self.tresEnderecos(ident, simbol, i) == False):
                     return False
             elif (simbol[i] == ')'):
@@ -387,6 +398,8 @@ class analisadorSintatico():
     #declaração de funções
     def _funcao(self, tokenFunc):
         token = self.nextToken()
+        ident = list()
+        simbol = list()
         if(self.listaParametros(tokenFunc)):
             token = self.nextToken()
             if (token == '{'):
@@ -400,16 +413,14 @@ class analisadorSintatico():
                 if  (token == 'return'):
                     token = self.nextToken()
                     tipo = self.getTipoId(tokenFunc)    #tipo recebe o tipo da função
-                    ident = list()
-                    simbol = list()
-
+                    
                     if (tipo == 'bool'):
-                        self.expressaoBool()
+                        self.expressaoBool(ident, simbol)
                             
                     if(tipo == 'int'):
                         self.expressaoArit( ident, simbol)
-                        self.codeIntermExpArit(tokenFunc, ident, simbol, 0)
-                        
+                    
+                    self.codeIntermExpArit(tokenFunc, ident, simbol, 0)    
                     token = self.listTokens[self.indice]
 
                     if (token == ';'):
@@ -457,7 +468,7 @@ class analisadorSintatico():
                 self.adicionarContexto(tokenId)                 #adiciona o contexto na tabela de simbolos
                 return self._atribuicao(tipo, tokenId)          #chama a atribuição
             elif(token == ';'):                                 #se for uma declaração de variavel, sem atribuição
-                self.adicionarContexto()                        #adiciona o contexto na tabela de simbolos
+                self.adicionarContexto(tokenId)                 #adiciona o contexto na tabela de simbolos
                 return True                                     #retorna true (declaração sem atribuição)
         self.salvarErro("Erro de declaração")
         return False
@@ -487,9 +498,11 @@ class analisadorSintatico():
     def _if(self):
         token = self.nextToken()
         self.incrementarContexto()
+        ident = list()
+        simbol = list()
         if (token == '('):
             token = self.nextToken()
-            if (self.expressaoBool()):
+            if (self.expressaoBool(ident, simbol)):
                 token = self.listTokens[self.indice]
                 if (token == ')'):
                     token = self.nextToken()
@@ -520,9 +533,11 @@ class analisadorSintatico():
     def _while(self):
         token = self.nextToken()
         self.incrementarContexto()
+        ident = list()
+        simbol = list()
         if (token == '('):
             token = self.nextToken()
-            ehExpBool = self.expressaoBool()
+            ehExpBool = self.expressaoBool(ident, simbol)
             if (ehExpBool):
                 token = self.listTokens[self.indice]    
                 if (token == ')'):
@@ -574,7 +589,7 @@ class analisadorSintatico():
         flag = False
 
         if (tipo == 'bool'):
-            flag = self.expressaoBool()
+            flag = self.expressaoBool(ident, simbol)
             token = self.listTokens[self.indice]
         elif (tipo == 'int'):
             flag  = self.expressaoArit(ident, simbol)   
