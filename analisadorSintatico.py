@@ -19,8 +19,15 @@ class analisadorSintatico():
         self.tmp = 'tmp'
         self.indiceTemp = 0
         self.isWhile = False
-
-
+        
+        # desvio condicional - codigo intermediario
+        self.identResultBool = None # variavel que salva o ultimo identificador, resultado de uma expressao booleana
+        self.contadorIf = 0 # conta os if-elifs-else
+        self.corposIf = list() # linhas do codigo intermediario dos corpos dos ifs
+        self.guardarIf = False # flag para guardar o codigo intermediario ao inves de salvalas no arquivo
+        
+        self.contadorDesvioCondicional = 0 # conta os desvios condicionais
+        
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
 
@@ -212,12 +219,17 @@ class analisadorSintatico():
         flag  = self.isId(token) and self.getTipoId(token) == 'bool'
         flag1 = flag and self.isContextoValido(self.getContexto(token)) #identificador do tipo booleano em um contexto valido
         flag2 = flag and self.isFunction(token)                         #função que retorna um booleano
-        i     = self.indice 
+        
+        # identificador do primeiro operando da expressão booleana
+        tokenIdEsq = self.listTokens[self.indice]
 
         if(self.expressaoArit(ident, simbol)):#se o primeiro termo for uma expressão aritmetica
+            # primeira parte da expressao booleana
+            self.codeIntermExpArit(tokenIdEsq, ident, simbol, 0)
+            
             if(self.operadorBool()):                                    #caso o token atual seja um operador boleano
                 token = self.listTokens[self.indice]
-                simbol.append(token)
+                #simbol.append(token)
                 if(token == "=="):
                     token = self.nextToken()
                     if (token == 'true' or token == 'false'):
@@ -226,11 +238,24 @@ class analisadorSintatico():
                         return True                        
                 else:
                     token = self.nextToken()
+                    
+                # segunda expressão aritmetica
+                tokenIdDir = self.listTokens[self.indice]
+                simbol = list()
+                ident = list()
+                
                 if(self.expressaoArit(ident, simbol)):
+                    self.codeIntermExpArit(tokenIdDir, ident, simbol, 0)
+                    codigo = "identIf" + str(self.contadorIf) + " := " + tokenIdEsq + " == " + tokenIdDir + "\n"
+                    if (self.guardarIf):
+                        self.corposIf[self.contadorIf-1].append(codigo)
+                    else:
+                        self.codigo_intermediario.writelines(codigo)
+                    self.identResultBool = "identIf"+str(self.contadorIf)
                     return True
         
         if (flag1 or flag2 or token == 'true' or token == 'false'):#se o primeiro termo for um identificador boleano ou true ou false
-            ident.append(token)
+            #ident.append(token)
             if(flag2):                                  #se for uma função
                 self._chamarFuncao()                    #chama a função
                 token = self.listTokens[self.indice]    #token recebebe o token atual
@@ -315,15 +340,23 @@ class analisadorSintatico():
         #usado no final da expressão
     
     def escreverIntermediarioAtribuicao(self, variavel, temp):
-        self.codigo_intermediario.writelines(variavel+' := '+temp+'\n')
+        codigo = variavel+' := '+temp+'\n'
+        if (self.guardarIf): # caso esteja dentro de um if
+            self.corposIf[self.contadorIf-1].append(codigo)
+        else:
+            self.codigo_intermediario.writelines(codigo)
         self.setValor(variavel, temp)
         print(variavel, temp)
     
     #usado durante a expressão
-    def escreverIntermediario(self, esq, sim, dire):  
+    def escreverIntermediario(self, esq, sim, dire): 
         self.tmp = 'tmp'+str(self.indiceTemp)               #tmp atual que será escrito no arquivo
         self.indiceTemp = self.indiceTemp + 1               #incrementa o proximo tmp
-        self.codigo_intermediario.writelines(self.tmp+' := '+ esq +' '+ sim + ' ' + dire +'\n')   #escreve o codigo no arquivo
+        codigo = self.tmp+' := '+ esq +' '+ sim + ' ' + dire +'\n'
+        if (self.guardarIf):
+            self.corposIf[self.contadorIf-1].append(codigo)
+        else:
+            self.codigo_intermediario.writelines(codigo)   #escreve o codigo no arquivo
 
     #monta a string que vai ser escrita no arquivo do codigo de tres endereços
     #e retira os elementos dos vetores ident e simbol
@@ -368,8 +401,6 @@ class analisadorSintatico():
 
         while (i < len(simbol)):
             if (simbol[i] == '+' or simbol[i] == '-'):
-                print (simbol)
-                print (ident)
                 if (self.tresEnderecos(ident, simbol, i) == False):
                     return False
             elif (simbol[i] == ')'):
@@ -501,24 +532,60 @@ class analisadorSintatico():
         self.incrementarContexto()
         ident = list()
         simbol = list()
+        
+        # sequencias de ifs tem mais um if
+        self.contadorIf += 1
+        
+        self.corposIf.append(list()) # lista com as linhas do codigo para o corpo do if
+        
         if (token == '('):
             token = self.nextToken()
             if (self.expressaoBool(ident, simbol)):
+                
+                # salva a linha de chamada do if
+                chamadaIf = "if "+str(self.identResultBool)+" goto L"+str(self.contadorIf) + "\n"
+                
+                if (self.guardarIf): # caso o if fique dentro de outro if
+                    self.corposIf[self.contadorIf-1].append(chamadaIf)
+                else:
+                    self.codigo_intermediario.writelines(chamadaIf)
+                
                 token = self.listTokens[self.indice]
                 if (token == ')'):
-                    token = self.nextToken()
-
+                    token = self.nextToken()  
+                    self.guardarIf = True # começa a guardar codigo intermediario do corpo
                     if (token == '{'):
                         token = self.nextToken()
                         while (self._s()):
                             token = self.nextToken()
                             if (token == '}'):
+                                self.guardarIf = False
                                 self.decrementaContexto()
+                                
+                                ### verifica se nao existe outro condicional, se nao existir descarrega no arquivo tudo que foi armazenado, senão continua incrementando
+                                prox_token = self.listTokens[self.indice+1] 
+                                if (prox_token != 'ifelse' and prox_token != 'else'): # sequencias de ifs chegam ao fim                                    
+                                    self.contadorDesvioCondicional += 1 # mais um desvio condicional
+                                    
+                                    for i in range(self.contadorIf):
+                                        self.codigo_intermediario.writelines("L" + str(i+1) + ":\n")
+                                        for corpo in self.corposIf[i]: # corpo do if(i+1)
+                                            self.codigo_intermediario.writelines(corpo)
+                                        self.codigo_intermediario.writelines("goto LIF" + str(self.contadorDesvioCondicional) + "\n")
+                                    self.codigo_intermediario.writelines("LIF" + str(self.contadorDesvioCondicional) + "\n") # label final do if
+                                    # zera a sequencia de ifs
+                                    self.contadorIf = 0
+                                    self.corposIf = list()
+                                
                                 return True
         self.salvarErro("Erro de desvio condicional")
         return False
     
     def _else(self):
+        
+        # sequencia de ifs tem mais um
+        self.contadorIf += 1
+        
         token = self.nextToken()
         self.incrementarContexto()
         if (token == '{'):
@@ -555,7 +622,6 @@ class analisadorSintatico():
                             if (token == '}'):
                                 self.isWhile = False
                                 self.decrementaContexto()
-                                self.contadorWhile -= 1
                                 return True
         self.salvarErro("Erro de laço")
         return False
@@ -622,7 +688,6 @@ class analisadorSintatico():
             return self._else()
             
         if (token == 'while'):
-            self.contadorWhile += 1
             return self._while()
         
         if (token == 'break' or token == 'continue' ):
