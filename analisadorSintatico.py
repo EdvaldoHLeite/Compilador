@@ -573,15 +573,19 @@ class analisadorSintatico():
         if (prox_token != 'ifelse' and prox_token != 'else'): # sequencias de ifs chegam ao fim                                    
             self.contadorDesvioCondicional += 1 # mais um desvio condicional
             
+            # ao final do desvio condicional completo, caso nenhum if tenha sido executado, é desviado para o final
+            self.codigo_intermediario.writelines("goto LIF" + str(self.contadorDesvioCondicional) + "\n")
+            
             for i in range(self.contadorIf):
                 self.codigo_intermediario.writelines("L" + str(i+1) + ":\n")
                 for corpo in self.corposIf[i]: # corpo do if(i+1)
                     self.codigo_intermediario.writelines(corpo)
                 self.codigo_intermediario.writelines("goto LIF" + str(self.contadorDesvioCondicional) + "\n")
-            self.codigo_intermediario.writelines("LIF" + str(self.contadorDesvioCondicional) + "\n") # label final do if
+            self.codigo_intermediario.writelines("LIF" + str(self.contadorDesvioCondicional) + ":\n") # label final do if
             # zera a sequencia de ifs
             self.contadorIf = 0
             self.corposIf = list()
+            
     
     def _else(self):
         # sequencia de ifs tem mais um
