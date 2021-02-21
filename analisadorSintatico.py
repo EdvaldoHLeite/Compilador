@@ -535,16 +535,14 @@ class analisadorSintatico():
         
         # sequencias de ifs tem mais um if
         self.contadorIf += 1
-        
         self.corposIf.append(list()) # lista com as linhas do codigo para o corpo do if
         
         if (token == '('):
             token = self.nextToken()
             if (self.expressaoBool(ident, simbol)):
                 
-                # salva a linha de chamada do if
+                # salva a linha de chamada do if aninhado
                 chamadaIf = "if "+str(self.identResultBool)+" goto L"+str(self.contadorIf) + "\n"
-                
                 if (self.guardarIf): # caso o if fique dentro de outro if
                     self.corposIf[self.contadorIf-1].append(chamadaIf)
                 else:
@@ -561,39 +559,51 @@ class analisadorSintatico():
                             if (token == '}'):
                                 self.guardarIf = False
                                 self.decrementaContexto()
-                                
-                                ### verifica se nao existe outro condicional, se nao existir descarrega no arquivo tudo que foi armazenado, senão continua incrementando
-                                prox_token = self.listTokens[self.indice+1] 
-                                if (prox_token != 'ifelse' and prox_token != 'else'): # sequencias de ifs chegam ao fim                                    
-                                    self.contadorDesvioCondicional += 1 # mais um desvio condicional
-                                    
-                                    for i in range(self.contadorIf):
-                                        self.codigo_intermediario.writelines("L" + str(i+1) + ":\n")
-                                        for corpo in self.corposIf[i]: # corpo do if(i+1)
-                                            self.codigo_intermediario.writelines(corpo)
-                                        self.codigo_intermediario.writelines("goto LIF" + str(self.contadorDesvioCondicional) + "\n")
-                                    self.codigo_intermediario.writelines("LIF" + str(self.contadorDesvioCondicional) + "\n") # label final do if
-                                    # zera a sequencia de ifs
-                                    self.contadorIf = 0
-                                    self.corposIf = list()
-                                
+                                self.descarregarIf()
                                 return True
         self.salvarErro("Erro de desvio condicional")
         return False
     
+    ### verifica se nao existe outro condicional, se nao existir descarrega no arquivo tudo que foi armazenado, senão continua incrementando
+    def descarregarIf(self):
+        prox_token = self.listTokens[self.indice+1] 
+        if (prox_token != 'ifelse' and prox_token != 'else'): # sequencias de ifs chegam ao fim                                    
+            self.contadorDesvioCondicional += 1 # mais um desvio condicional
+            
+            for i in range(self.contadorIf):
+                self.codigo_intermediario.writelines("L" + str(i+1) + ":\n")
+                for corpo in self.corposIf[i]: # corpo do if(i+1)
+                    self.codigo_intermediario.writelines(corpo)
+                self.codigo_intermediario.writelines("goto LIF" + str(self.contadorDesvioCondicional) + "\n")
+            self.codigo_intermediario.writelines("LIF" + str(self.contadorDesvioCondicional) + "\n") # label final do if
+            # zera a sequencia de ifs
+            self.contadorIf = 0
+            self.corposIf = list()
+    
     def _else(self):
-        
         # sequencia de ifs tem mais um
         self.contadorIf += 1
+        self.corposIf.append(list()) # lista com as linhas do codigo para o corpo do if
         
         token = self.nextToken()
         self.incrementarContexto()
+        
+        # salva a linha de chamada do if aninhado
+        chamadaIf = "goto L"+str(self.contadorIf) + "\n"
+        if (self.guardarIf): # caso o if fique dentro de outro if
+            self.corposIf[self.contadorIf-1].append(chamadaIf)
+        else:
+            self.codigo_intermediario.writelines(chamadaIf)
+        
+        self.guardarIf = True
         if (token == '{'):
             token = self.nextToken()
             while (self._s()):
                 token = self.nextToken()
                 if (token == '}'):
+                    self.guardarIf = False
                     self.decrementaContexto()
+                    self.descarregarIf()
                     return True
         self.salvarErro("Erro de desvio condicional")
         return False
