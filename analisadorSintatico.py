@@ -28,6 +28,9 @@ class analisadorSintatico():
         
         self.contadorDesvioCondicional = 0 # conta os desvios condicionais
         
+        
+        # while - codigo intermediario
+        self.contadorWhile = 0
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
 
@@ -613,12 +616,22 @@ class analisadorSintatico():
         self.incrementarContexto()
         ident = list()
         simbol = list()
+        
+        self.contadorWhile += 1 # incrementa o contador de while
+        labelInicio = "W" + str(self.contadorWhile)
+        labelSaida = "W" # label para saida e finalizacao do while
+        
         if (token == '('):
             token = self.nextToken()
             ehExpBool = self.expressaoBool(ident, simbol)
             if (ehExpBool):
                 token = self.listTokens[self.indice]    
                 if (token == ')'):
+                    self.codigo_intermediario.writelines(labelInicio + ":\n")
+                    self.contadorWhile += 1 # contador while usa dois labels, um para cotinuar e outro para sair
+                    labelSaida += str(self.contadorWhile)
+                    self.codigo_intermediario.writelines("iffalse " + str(self.identResultBool) + " goto " + labelSaida + "\n")
+                    
                     token = self.nextToken()
                     if (token == '{'):
                         token = self.nextToken()
@@ -632,6 +645,10 @@ class analisadorSintatico():
                             if (token == '}'):
                                 self.isWhile = False
                                 self.decrementaContexto()
+                                
+                                self.codigo_intermediario.writelines("goto " + labelInicio + "\n")
+                                self.codigo_intermediario.writelines(labelSaida+":\n") # label de saida do whiles
+                                
                                 return True
         self.salvarErro("Erro de laço")
         return False
