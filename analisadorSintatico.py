@@ -22,6 +22,7 @@ class analisadorSintatico():
         
         # desvio condicional - codigo intermediario
         self.identResultBool = None # variavel que salva o ultimo identificador, resultado de uma expressao booleana
+        self.pilhaIfs = list() # pilha com os ifs que não terminaram de ser escritos por completo
         self.contadorIf = 0 # conta os if-elifs-else
         self.desviosAtuais = list() # pilha de desvios condicionais abertos
         self.contadorDesvioCondicional = 0 # conta os desvios condicionais
@@ -543,6 +544,7 @@ class analisadorSintatico():
         
         # sequencias de ifs tem mais um if
         self.contadorIf += 1
+        self.pilhaIfs.append(self.contadorIf) # adiciona o if atual na pilha
         
         if (token == '('):
             token = self.nextToken()
@@ -566,7 +568,8 @@ class analisadorSintatico():
                                 self.decrementaContexto()
                                 # goto para label do desvio condicional e finalizacao do if
                                 self.codigo_intermediario.writelines("goto L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + "\n")
-                                self.codigo_intermediario.writelines("fimIF" + str(self.contadorIf) + ":\n")
+                                ifAtual = self.pilhaIfs.pop()
+                                self.codigo_intermediario.writelines("fimIF" + str(ifAtual) + ":\n")
                                 self.fecharDesvioCondicional()
                                 return True
                         
@@ -584,6 +587,7 @@ class analisadorSintatico():
     def _else(self):
         # sequencia de ifs tem mais um
         self.contadorIf += 1
+        self.pilhaIfs.append(self.contadorIf) # adiciona o if atual na pilha
         
         token = self.nextToken()
         self.incrementarContexto()
@@ -600,7 +604,8 @@ class analisadorSintatico():
                 if (token == '}'):
                     self.decrementaContexto()
                     self.codigo_intermediario.writelines("goto L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + "\n")
-                    self.codigo_intermediario.writelines("fimIF" + str(self.contadorIf) + ":\n")
+                    ifAtual = self.pilhaIfs.pop()
+                    self.codigo_intermediario.writelines("fimIF" + str(ifAtual) + ":\n")
                     self.fecharDesvioCondicional()
                     return True
         self.salvarErro("Erro de desvio condicional")
