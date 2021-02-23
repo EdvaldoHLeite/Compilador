@@ -20,7 +20,6 @@ class analisadorSintatico():
         self.indiceTemp = 0
         self.isWhile = False
 
-
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
 
@@ -318,7 +317,7 @@ class analisadorSintatico():
     def escreverIntermediarioAtribuicao(self, variavel, temp):
         self.codigo_intermediario.writelines(variavel+' := '+temp+'\n')
         self.setValor(variavel, temp)
-        print(variavel, temp)
+        
     
     #usado durante a expressão
     def escreverIntermediario(self, esq, sim, dire):  
@@ -369,8 +368,6 @@ class analisadorSintatico():
 
         while (i < len(simbol)):
             if (simbol[i] == '+' or simbol[i] == '-'):
-                print (simbol)
-                print (ident)
                 if (self.tresEnderecos(ident, simbol, i) == False):
                     return False
             elif (simbol[i] == ')'):
@@ -560,7 +557,6 @@ class analisadorSintatico():
                             if (token == '}'):
                                 self.isWhile = False
                                 self.decrementaContexto()
-                                self.contadorWhile -= 1
                                 return True
         self.salvarErro("Erro de laço")
         return False
@@ -627,7 +623,6 @@ class analisadorSintatico():
             return self._else()
             
         if (token == 'while'):
-            self.contadorWhile += 1
             return self._while()
         
         if (token == 'break' or token == 'continue' ):
@@ -639,9 +634,8 @@ class analisadorSintatico():
                 else:
                     self.salvarErro("Erro de desvio condicional. Uso fora do loop!")
                     return False
-
             else:
-                self.salvarErro("Erro de desvio incondicional")
+                self.salvarErro("Erro de desvio condicional")
                 return False
         
         if (self.isId(token)):
