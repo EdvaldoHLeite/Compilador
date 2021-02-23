@@ -222,12 +222,17 @@ class analisadorSintatico():
         flag  = self.isId(token) and self.getTipoId(token) == 'bool'
         flag1 = flag and self.isContextoValido(self.getContexto(token)) #identificador do tipo booleano em um contexto valido
         flag2 = flag and self.isFunction(token)                         #função que retorna um booleano
-        i     = self.indice 
+        
+        # identificador do primeiro operando da expressão booleana
+        tokenIdEsq = self.listTokens[self.indice]
 
         if(self.expressaoArit(ident, simbol)):#se o primeiro termo for uma expressão aritmetica
+            # primeira parte da expressao booleana
+            self.codeIntermExpArit(tokenIdEsq, ident, simbol, 0)
+            
             if(self.operadorBool()):                                    #caso o token atual seja um operador boleano
                 token = self.listTokens[self.indice]
-                simbol.append(token)
+                #simbol.append(token)
                 if(token == "=="):
                     token = self.nextToken()
                     if (token == 'true' or token == 'false'):
@@ -236,11 +241,21 @@ class analisadorSintatico():
                         return True                        
                 else:
                     token = self.nextToken()
+                    
+                # segunda expressão aritmetica
+                tokenIdDir = self.listTokens[self.indice]
+                simbol = list()
+                ident = list()
+                
                 if(self.expressaoArit(ident, simbol)):
+                    self.codeIntermExpArit(tokenIdDir, ident, simbol, 0)
+                    codigo = "identIf" + str(self.contadorIf) + " := " + tokenIdEsq + " == " + tokenIdDir + "\n"
+                    self.codigo_intermediario.writelines(codigo)
+                    self.identResultBool = "identIf"+str(self.contadorIf)
                     return True
         
         if (flag1 or flag2 or token == 'true' or token == 'false'):#se o primeiro termo for um identificador boleano ou true ou false
-            ident.append(token)
+            #ident.append(token)
             if(flag2):                                  #se for uma função
                 self._chamarFuncao()                    #chama a função
                 token = self.listTokens[self.indice]    #token recebebe o token atual
@@ -503,8 +518,10 @@ class analisadorSintatico():
 
 
         if (flag == True or token == 'numero'):
+            lexema = self.lexemas[self.indice]
             token = self.nextToken()
             if(token == ';'):
+                self.codigo_intermediario.writelines("print " + lexema + "\n")
                 return True
         self.salvarErro("Erro no print")
         return False
@@ -588,7 +605,7 @@ class analisadorSintatico():
         
         self.contadorWhile += 1 # incrementa o contador de while
         labelInicio = "W" + str(self.contadorWhile)
-        labelSaida = "W" # label para saida e finalizacao do while
+        labelSaida = "Wfim" + str(self.contadorWhile) # label para saida e finalizacao do while
         
         if (token == '('):
             token = self.nextToken()
@@ -597,9 +614,6 @@ class analisadorSintatico():
             if (ehExpBool):
                 token = self.listTokens[self.indice]    
                 if (token == ')'):
-                    #self.codigo_intermediario.writelines(labelInicio + ":\n")
-                    self.contadorWhile += 1 # contador while usa dois labels, um para cotinuar e outro para sair
-                    labelSaida += str(self.contadorWhile)
                     self.codigo_intermediario.writelines("iffalse " + str(self.identResultBool) + " goto " + labelSaida + "\n")
                     
                     token = self.nextToken()
@@ -690,10 +704,17 @@ class analisadorSintatico():
             return self._while()
         
         if (token == 'break' or token == 'continue' ):
+            desvio = token
             token = self.nextToken()
             
             if (token == ';'):
                 if(self.isWhile):
+                    
+                    if (desvio == 'break'): # vai para o label final do while
+                        self.codigo_intermediario.writelines("goto Wfim" + str(self.contadorWhile) + "\n")
+                    elif (desvio == 'continue'):
+                        self.codigo_intermediario.writelines("goto W" + str(self.contadorWhile) + "\n")
+                    
                     return True
                 else:
                     self.salvarErro("Erro de desvio condicional. Uso fora do loop!")
