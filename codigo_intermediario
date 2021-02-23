@@ -1,70 +1,86 @@
-id1 := 0
-id2 := true
-tmp0 := id2 != false
-id3 := tmp0
-tmp1 := 2 + 1
-tmp2 := tmp1 == 3
-id4 := tmp2
-tmp3 := 2 + 2
-id5 := tmp3
-tmp4 := 3 - 3
+tmp0 := 2 + 2
+id1 := tmp0
+tmp1 := 1 == 2
+id2 := tmp1
+id3 := 0
+id4 := true
+tmp2 := id4 != false
+id5 := tmp2
+tmp3 := 2 + 1
+tmp4 := tmp3 == 3
 id6 := tmp4
-tmp5 := 5 + 4
-tmp6 := id6 * 3
-tmp7 := tmp6 / 2
-tmp8 := id5 + tmp7
-tmp9 := tmp8 - tmp5
-id7 := tmp9
+tmp5 := 2 + 2
+id7 := tmp5
+tmp6 := 3 - 3
+id8 := tmp6
+tmp7 := 5 + 4
+tmp8 := id8 * 3
+tmp9 := tmp8 / 2
+tmp10 := id7 + tmp9
+tmp11 := tmp10 - tmp7
+id9 := tmp11
+print 2
 W1:
-iffalse None goto W2
-id13 := 10
+iffalse None goto Wfim1
+print 2
+id14 := 10
 iffalse None goto fimIF1
+print 3
 goto L_IF1
 fimIF1:
+print 4
 goto L_IF1
 fimIF2:
 L_IF1:
 goto W1
-W2:
+Wfim1:
 iffalse None goto fimIF3
+print a
+print c
 goto L_IF2
 fimIF3:
 L_IF2:
-tmp10 := 2 + 2
-id8 := tmp10
-id14 := true
-id15 := 1
+tmp12 := 2 + 2
+id10 := tmp12
+id15 := true
+id16 := 1
+print 234
+W2:
+iffalse None goto Wfim2
+print a
 W3:
-iffalse None goto W4
-W5:
-iffalse None goto W6
-goto W5
-W6:
+iffalse None goto Wfim3
+print d
+goto W3
+Wfim3:
 iffalse None goto fimIF4
+goto W3
 goto L_IF3
 fimIF4:
 L_IF3:
-goto W3
-W4:
-tmp11 := 8 / 2
-tmp12 := 10 - tmp11
-tmp13 := 7 * tmp12
-tmp14 := 6 - tmp13
-tmp15 := tmp14 + 5
-id1 := tmp15
-tmp16 := 1 < 3
-id18 := tmp16
-id19 := tmp10
+goto Wfim3
+goto W2
+Wfim2:
+tmp13 := 8 / 2
+tmp14 := 10 - tmp13
+tmp15 := 7 * tmp14
+tmp16 := 6 - tmp15
+tmp17 := tmp16 + 5
+id3 := tmp17
 iffalse None goto fimIF5
+print flag
 goto L_IF4
 fimIF5:
 L_IF4:
-W7:
-iffalse None goto W8
-goto W7
-W8:
-id20 := false
+W4:
+iffalse None goto Wfim4
+print flag
+goto Wfim4
+goto W4
+Wfim4:
+id21 := false
 iffalse None goto fimIF6
+print p
 goto L_IF5
 fimIF6:
 L_IF5:
