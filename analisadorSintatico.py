@@ -323,14 +323,18 @@ class analisadorSintatico():
             if(self.isId(token)):
                 self.adicionarTipo(token, tipo)                 #adiciona tipo ao identificador
                 self.adicionarParametro(tokenFunc, token)       #adiciona o parametro a função na tabela de simbolos
+                self.codigo_intermediario.writelines(token)
                 token = self.nextToken()
                 if (token == ','):
+                    self.codigo_intermediario.writelines(', ')
                     token = self.nextToken()
                     if (token == 'int' or 'bool'):  #é verificado novamente para não ser possivel colocar algo do tipo (.... int a;)
                         return self.listaParametros(tokenFunc)
                 elif(token == ')'):
+                    self.codigo_intermediario.writelines(')\n')
                     return True
         elif(token == ')'):         #lista de parametros vazia
+            self.codigo_intermediario.writelines(')\n')
             return True
         self.salvarErro("Erro de lista de parametros")
         return False
@@ -405,7 +409,11 @@ class analisadorSintatico():
             self.tresEnderecos(ident, simbol, 0)
 
         if (len(simbol) == 0 and len(ident) == 1):
-            self.escreverIntermediarioAtribuicao(token, ident[0])       #escreve a ultima linha do codigo de três endereços para a expressão
+            if(self.isFunction(token)):
+                self.indiceTemp += 1
+                self.escreverIntermediarioAtribuicao('temp'+str(self.indiceTemp-1), ident[0])
+            else:
+                self.escreverIntermediarioAtribuicao(token, ident[0])       #escreve a ultima linha do codigo de três endereços para a expressão
         else:
             self.salvarErro('Erro na formação da expressão. Erro ao tentar escrever codigo intermediario')
             return False 
@@ -423,7 +431,8 @@ class analisadorSintatico():
                 return i.valor
     
     #declaração de funções
-    def _funcao(self, tokenFunc):
+    def _funcao(self, tokenFunc, lexFunc):
+        self.codigo_intermediario.writelines('function '+lexFunc+('('))
         token = self.nextToken()
         ident = list()
         simbol = list()
@@ -449,7 +458,7 @@ class analisadorSintatico():
                     
                     self.codeIntermExpArit(tokenFunc, ident, simbol, 0)    
                     token = self.listTokens[self.indice]
-
+                    self.codigo_intermediario.writelines('return tmp'+str(self.indiceTemp-1)+'\n')
                     if (token == ';'):
                         token = self.nextToken()
                         if(token == '}'):
@@ -460,8 +469,9 @@ class analisadorSintatico():
         return False
 
     #declaração de procedimento
-    def _procedimento(self, tokenProc):
+    def _procedimento(self, tokenProc, lexFunc):
         token = self.nextToken()
+        self.codigo_intermediario.writelines('procedimeto '+lexFunc+('('))
         if(self.listaParametros(tokenProc)):
             token = self.nextToken()
             if (token == '{'):
@@ -469,6 +479,7 @@ class analisadorSintatico():
                 while(self._s()):
                     token = self.nextToken()
                     if (token == '}'):
+                        self.codigo_intermediario.writelines('return\n')
                         self.decrementaContexto()
                         return True                    
         self.salvarErro("Erro de procedimento")
@@ -478,25 +489,25 @@ class analisadorSintatico():
     def _declaracao(self):
         tipo = self.listTokens[self.indice]
         token = self.nextToken()
+        lexFunc = self.lexemas[self.indice]
         tokenId = token #id do token que será atribuido
         if (self.isId(token)):
-            self.adicionarTipo(token, tipo)                     #adiciona o tipo na tabela de simbolos
+            self.adicionarTipo(token, tipo)                         #adiciona o tipo na tabela de simbolos
             token = self.nextToken()
-            if (token == '(' and self.isWhile == False):        #se for uma função ou um procedimento e nao estaja dentro de um while.
+            if (token == '(' and self.isWhile == False):            #se for uma função ou um procedimento e nao estaja dentro de um while.
                 if (self.contexto == self.contextoPrincipal or self.contexto == ''):   #se estiver no contexto principal                                           
-                    self.contexto = ''
-                    self.incrementarContexto()                  #incrementa o contexto
-                    self.adicionarContexto(tokenId)             #adiciona o contexto na tabela de simbolos
-                    if (tipo == 'void'):                        #caso seja um procedimento
-                        return self._procedimento(tokenId)      #retornará True caso a sintaxe do procedimento esteja correto.
-                    self.setFunctionTrue(tokenId)               #caso não seja um procedimento, adiciona funcao = true para este token na tabela de simbolos
-                    return self._funcao(tokenId)                #retornará True caso a sintaxe da função esteja correta
-            elif (token == '='):                                #se for a atribuição de uma variavel
-                self.adicionarContexto(tokenId)                 #adiciona o contexto na tabela de simbolos
-                return self._atribuicao(tipo, tokenId)          #chama a atribuição
-            elif(token == ';'):                                 #se for uma declaração de variavel, sem atribuição
-                self.adicionarContexto(tokenId)                 #adiciona o contexto na tabela de simbolos
-                return True                                     #retorna true (declaração sem atribuição)
+                    self.incrementarContexto()                      #incrementa o contexto
+                    self.adicionarContexto(tokenId)                 #adiciona o contexto na tabela de simbolos
+                    if (tipo == 'void'):                            #caso seja um procedimento
+                        return self._procedimento(tokenId, lexFunc) #retornará True caso a sintaxe do procedimento esteja correto.
+                    self.setFunctionTrue(tokenId)                   #caso não seja um procedimento, adiciona funcao = true para este token na tabela de simbolos
+                    return self._funcao(tokenId, lexFunc)           #retornará True caso a sintaxe da função esteja correta
+            elif (token == '='):                                    #se for a atribuição de uma variavel
+                self.adicionarContexto(tokenId)                     #adiciona o contexto na tabela de simbolos
+                return self._atribuicao(tipo, tokenId)              #chama a atribuição
+            elif(token == ';'):                                     #se for uma declaração de variavel, sem atribuição
+                self.adicionarContexto(tokenId)                     #adiciona o contexto na tabela de simbolos
+                return True                                         #retorna true (declaração sem atribuição)
         self.salvarErro("Erro de declaração")
         return False
 
