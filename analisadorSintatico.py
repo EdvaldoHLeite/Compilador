@@ -512,9 +512,10 @@ class analisadorSintatico():
 
 
         if (flag == True or token == 'numero'):
+            lexema = self.lexemas[self.indice]
             token = self.nextToken()
             if(token == ';'):
-                #self.codigo_intermediario.writelines("print " + token + "\n")
+                self.codigo_intermediario.writelines("print " + lexema + "\n")
                 return True
         self.salvarErro("Erro no print")
         return False
