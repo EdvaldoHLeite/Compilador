@@ -536,9 +536,10 @@ class analisadorSintatico():
         if (token == '('):
             token = self.nextToken()
             if (self.expressaoBool(ident, simbol)):
-                
+                boolIf = "boolIf" + str(self.contadorIf)
+                self.codeIntermExpArit(boolIf, ident, simbol, 0)
                 # salva a linha de chamada do if aninhado
-                chamadaIf = "iffalse "+str(self.identResultBool)+" goto fimIF"+str(self.contadorIf) + "\n"
+                chamadaIf = "iffalse "+str(boolIf)+" goto fimIF"+str(self.contadorIf) + "\n"
                 self.codigo_intermediario.writelines(chamadaIf)
                 
                 token = self.listTokens[self.indice]
@@ -611,7 +612,9 @@ class analisadorSintatico():
             if (ehExpBool):
                 token = self.listTokens[self.indice]    
                 if (token == ')'):
-                    self.codigo_intermediario.writelines("iffalse " + str(self.identResultBool) + " goto " + labelSaida + "\n")
+                    boolWhile = "boolWhile" + str(self.contadorWhile)
+                    self.codeIntermExpArit(boolWhile, ident, simbol, 0)
+                    self.codigo_intermediario.writelines("iffalse " + str(boolWhile) + " goto " + labelSaida + "\n")
                     
                     token = self.nextToken()
                     if (token == '{'):
