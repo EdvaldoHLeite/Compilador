@@ -1,6 +1,8 @@
 int a = 2 + 2;
 bool t = 1 == 2;
-
+void cased(){
+	print 2;
+}
 int p = 0;
 bool vet(){
 	return true;
