@@ -4,21 +4,22 @@ tmp1 := 1 == 2
 id2 := tmp1
 id3 := 0
 id4 := true
-tmp2 := id4 != false
-id5 := tmp2
-tmp3 := 2 + 1
-tmp4 := tmp3 == 3
-id6 := tmp4
-tmp5 := 2 + 2
-id7 := tmp5
-tmp6 := 3 - 3
-id8 := tmp6
-tmp7 := 5 + 4
-tmp8 := id8 * 3
-tmp9 := tmp8 / 2
-tmp10 := id7 + tmp9
-tmp11 := tmp10 - tmp7
-id9 := tmp11
+tmp2 := call vet, 0
+tmp3 := id4 != false
+id5 := tmp3
+tmp4 := 2 + 1
+tmp5 := tmp4 == 3
+id6 := tmp5
+tmp6 := 2 + 2
+id7 := tmp6
+tmp7 := 3 - 3
+id8 := tmp7
+tmp8 := 5 + 4
+tmp9 := id8 * 3
+tmp10 := tmp9 / 2
+tmp11 := id7 + tmp10
+tmp12 := tmp11 - tmp8
+id9 := tmp12
 print 2
 W1:
 iffalse None goto Wfim1
@@ -40,8 +41,8 @@ print c
 goto L_IF2
 fimIF3:
 L_IF2:
-tmp12 := 2 + 2
-id10 := tmp12
+tmp13 := 2 + 2
+id10 := tmp13
 id15 := true
 id16 := 1
 print 234
@@ -61,12 +62,20 @@ L_IF3:
 goto Wfim3
 goto W2
 Wfim2:
-tmp13 := 8 / 2
-tmp14 := 10 - tmp13
-tmp15 := 7 * tmp14
-tmp16 := 6 - tmp15
-tmp17 := tmp16 + 5
-id3 := tmp17
+tmp14 := 8 / 2
+tmp15 := 10 - tmp14
+tmp16 := 7 * tmp15
+tmp17 := 6 - tmp16
+tmp18 := tmp17 + 5
+id3 := tmp18
+tmp19 := call teste3, 0
+tmp20 := call teste2, 0
+param id3
+param false
+tmp21 := call teste3, 0
+param tmp21
+param 4
+tmp22 := call teste, 4
 iffalse None goto fimIF5
 print flag
 goto L_IF4
@@ -79,8 +88,16 @@ goto Wfim4
 goto W4
 Wfim4:
 id21 := false
+tmp23 := call teste2, 0
 iffalse None goto fimIF6
 print p
 goto L_IF5
 fimIF6:
 L_IF5:
+param id3
+param true
+param id20
+param 3
+tmp24 := call teste2, 0
+param tmp24
+tmp25 := call procedimento, 5
