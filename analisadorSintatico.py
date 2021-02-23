@@ -514,6 +514,7 @@ class analisadorSintatico():
         if (flag == True or token == 'numero'):
             token = self.nextToken()
             if(token == ';'):
+                #self.codigo_intermediario.writelines("print " + token + "\n")
                 return True
         self.salvarErro("Erro no print")
         return False
@@ -597,7 +598,7 @@ class analisadorSintatico():
         
         self.contadorWhile += 1 # incrementa o contador de while
         labelInicio = "W" + str(self.contadorWhile)
-        labelSaida = "W" # label para saida e finalizacao do while
+        labelSaida = "Wfim" + str(self.contadorWhile) # label para saida e finalizacao do while
         
         if (token == '('):
             token = self.nextToken()
@@ -607,8 +608,6 @@ class analisadorSintatico():
                 token = self.listTokens[self.indice]    
                 if (token == ')'):
                     #self.codigo_intermediario.writelines(labelInicio + ":\n")
-                    self.contadorWhile += 1 # contador while usa dois labels, um para cotinuar e outro para sair
-                    labelSaida += str(self.contadorWhile)
                     self.codigo_intermediario.writelines("iffalse " + str(self.identResultBool) + " goto " + labelSaida + "\n")
                     
                     token = self.nextToken()
@@ -699,10 +698,17 @@ class analisadorSintatico():
             return self._while()
         
         if (token == 'break' or token == 'continue' ):
+            desvio = token
             token = self.nextToken()
             
             if (token == ';'):
                 if(self.isWhile):
+                    
+                    if (desvio == 'break'): # vai para o label final do while
+                        self.codigo_intermediario.writelines("goto Wfim" + str(self.contadorWhile) + "\n")
+                    elif (desvio == 'continue'):
+                        self.codigo_intermediario.writelines("goto W" + str(self.contadorWhile) + "\n")
+                    
                     return True
                 else:
                     self.salvarErro("Erro de desvio condicional. Uso fora do loop!")
