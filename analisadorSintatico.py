@@ -19,7 +19,16 @@ class analisadorSintatico():
         self.tmp = 'tmp'
         self.indiceTemp = 0
         self.isWhile = False
-
+        
+        # desvio condicional - codigo intermediario
+        self.identResultBool = None # variavel que salva o ultimo identificador, resultado de uma expressao booleana
+        self.contadorIf = 0 # conta os if-elifs-else
+        self.desviosAtuais = list() # pilha de desvios condicionais abertos
+        self.contadorDesvioCondicional = 0 # conta os desvios condicionais
+        
+        
+        # while - codigo intermediario
+        self.contadorWhile = 0
     def salvarErro(self, msg):
         self.arquivo_saida.writelines(msg + ", linha: "+str(int(self.tokensLinhas[self.indice-1])) + ", token>>"+self.listTokens[self.indice-1] + '\n')
 
@@ -147,6 +156,7 @@ class analisadorSintatico():
         if (tokFun != -1 and tok != -1):               
             self.tabelaSimbolos[tokFun].parametros.append(tok)
 
+    #verifica se o simbolo é um operador booleano
     def isOperadorBool(self, simbol):
         operadores = "== != > >= < <= = !"
         if simbol in operadores.split():
@@ -315,15 +325,17 @@ class analisadorSintatico():
         #usado no final da expressão
     
     def escreverIntermediarioAtribuicao(self, variavel, temp):
-        self.codigo_intermediario.writelines(variavel+' := '+temp+'\n')
+        codigo = variavel+' := '+temp+'\n'
+        self.codigo_intermediario.writelines(codigo)
         self.setValor(variavel, temp)
-        
+        print(variavel, temp)
     
     #usado durante a expressão
-    def escreverIntermediario(self, esq, sim, dire):  
+    def escreverIntermediario(self, esq, sim, dire): 
         self.tmp = 'tmp'+str(self.indiceTemp)               #tmp atual que será escrito no arquivo
         self.indiceTemp = self.indiceTemp + 1               #incrementa o proximo tmp
-        self.codigo_intermediario.writelines(self.tmp+' := '+ esq +' '+ sim + ' ' + dire +'\n')   #escreve o codigo no arquivo
+        codigo = self.tmp+' := '+ esq +' '+ sim + ' ' + dire +'\n'
+        self.codigo_intermediario.writelines(codigo)   #escreve o codigo no arquivo
 
     #monta a string que vai ser escrita no arquivo do codigo de tres endereços
     #e retira os elementos dos vetores ident e simbol
@@ -503,32 +515,67 @@ class analisadorSintatico():
         self.incrementarContexto()
         ident = list()
         simbol = list()
+        
+        # sequencias de ifs tem mais um if
+        self.contadorIf += 1
+        
         if (token == '('):
             token = self.nextToken()
             if (self.expressaoBool(ident, simbol)):
+                
+                # salva a linha de chamada do if aninhado
+                chamadaIf = "iffalse "+str(self.identResultBool)+" goto fimIF"+str(self.contadorIf) + "\n"
+                self.codigo_intermediario.writelines(chamadaIf)
+                
                 token = self.listTokens[self.indice]
                 if (token == ')'):
-                    token = self.nextToken()
-
+                    token = self.nextToken()  
+                    self.guardarIf = True # começa a guardar codigo intermediario do corpo
                     if (token == '{'):
                         token = self.nextToken()
-                        while (self._s()):
+                        while (self._s()):                            
                             token = self.nextToken()
                             if (token == '}'):
+                                self.guardarIf = False
                                 self.decrementaContexto()
+                                # goto para label do desvio condicional e finalizacao do if
+                                self.codigo_intermediario.writelines("goto L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + "\n")
+                                self.codigo_intermediario.writelines("fimIF" + str(self.contadorIf) + ":\n")
+                                self.fecharDesvioCondicional()
                                 return True
+                        
         self.salvarErro("Erro de desvio condicional")
         return False
     
+    ### verifica se nao existe outro condicional
+    def fecharDesvioCondicional(self):
+        prox_token = self.listTokens[self.indice+1] 
+        if (prox_token != 'ifelse' and prox_token != 'else'): # sequencias de ifs chegam ao fim
+            self.codigo_intermediario.writelines("L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + ":\n") # label final do desvio condicional
+            self.desviosAtuais.pop() # remove o desvio condicional atual da pilha
+        
+    
     def _else(self):
+        # sequencia de ifs tem mais um
+        self.contadorIf += 1
+        
         token = self.nextToken()
         self.incrementarContexto()
+        
+        # salva a linha de chamada do if aninhado
+        #chamadaIf = "goto L"+str(self.contadorIf) + "\n"
+        #self.codigo_intermediario.writelines(chamadaIf)
+        
+        self.guardarIf = True
         if (token == '{'):
             token = self.nextToken()
             while (self._s()):
                 token = self.nextToken()
                 if (token == '}'):
                     self.decrementaContexto()
+                    self.codigo_intermediario.writelines("goto L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + "\n")
+                    self.codigo_intermediario.writelines("fimIF" + str(self.contadorIf) + ":\n")
+                    self.fecharDesvioCondicional()
                     return True
         self.salvarErro("Erro de desvio condicional")
         return False
@@ -538,12 +585,23 @@ class analisadorSintatico():
         self.incrementarContexto()
         ident = list()
         simbol = list()
+        
+        self.contadorWhile += 1 # incrementa o contador de while
+        labelInicio = "W" + str(self.contadorWhile)
+        labelSaida = "W" # label para saida e finalizacao do while
+        
         if (token == '('):
             token = self.nextToken()
+            self.codigo_intermediario.writelines(labelInicio + ":\n")
             ehExpBool = self.expressaoBool(ident, simbol)
             if (ehExpBool):
                 token = self.listTokens[self.indice]    
                 if (token == ')'):
+                    #self.codigo_intermediario.writelines(labelInicio + ":\n")
+                    self.contadorWhile += 1 # contador while usa dois labels, um para cotinuar e outro para sair
+                    labelSaida += str(self.contadorWhile)
+                    self.codigo_intermediario.writelines("iffalse " + str(self.identResultBool) + " goto " + labelSaida + "\n")
+                    
                     token = self.nextToken()
                     if (token == '{'):
                         token = self.nextToken()
@@ -557,6 +615,10 @@ class analisadorSintatico():
                             if (token == '}'):
                                 self.isWhile = False
                                 self.decrementaContexto()
+                                
+                                self.codigo_intermediario.writelines("goto " + labelInicio + "\n")
+                                self.codigo_intermediario.writelines(labelSaida+":\n") # label de saida do whiles
+                                
                                 return True
         self.salvarErro("Erro de laço")
         return False
@@ -614,6 +676,8 @@ class analisadorSintatico():
             return self._print()
         
         if (token == 'if'):
+            self.contadorDesvioCondicional += 1
+            self.desviosAtuais.append(self.contadorDesvioCondicional) # adiciona o desvio condicional atual na pilha
             return self._if()
 
         if (token == 'ifelse'): # o corpo do if eh parecido
@@ -634,8 +698,9 @@ class analisadorSintatico():
                 else:
                     self.salvarErro("Erro de desvio condicional. Uso fora do loop!")
                     return False
+
             else:
-                self.salvarErro("Erro de desvio condicional")
+                self.salvarErro("Erro de desvio incondicional")
                 return False
         
         if (self.isId(token)):
@@ -684,8 +749,8 @@ class analisadorSintatico():
         self.arquivo_entrada.close()
         self.arquivo_saida.close()  
 
-        #for i in self.tabelaSimbolos:
-        #    print(i.lexema+' ----- valor = ' +i.valor)
+        for i in self.tabelaSimbolos:
+            print(i.lexema+' ----- valor = ' +i.valor)
 
 analisador = analisadorSintatico()
 analisador.inicio()
