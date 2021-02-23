@@ -267,7 +267,7 @@ class analisadorSintatico():
         return False
     
     #lista de parametros para a chamada da função
-    def listaParametrosChamada(self, tokenFunc, i):            #token da função
+    def listaParametrosChamada(self, tokenFunc, i, lexFunc):            #token da função
         token = self.listTokens[self.indice]
         lista = self.getListParam(tokenFunc)
         
@@ -278,22 +278,36 @@ class analisadorSintatico():
             flag2 = token == 'numero' and tipo == 'int'
             flag3 = tipo == 'bool' and (token == 'true' or token == 'false')
             flag4 = flag and self.isFunction(token)
-
+            #  1)token é um id valido
+            #  2)token é um numero
+            #  3)token é true ou false
+            #  4)token é uma função
             if (flag1 or flag2 or flag3 or flag4):
                 if(flag4):
                     self._chamarFuncao()
+                    self.codigo_intermediario.writelines('param tmp'+str(self.indiceTemp - 1)+'\n')
                     token = self.listTokens[self.indice]
                 else:
+                    #codigo de três endereços: (adicionando os parametros)
+                    if(flag1 or flag3):
+                        self.codigo_intermediario.writelines('param '+token+'\n')
+                    else:
+                        self.codigo_intermediario.writelines('param '+self.getLexema()+'\n')
+                    #passa para o proximo token e continua a chamada da função
                     token = self.nextToken()
                 i += 1
                 if(token == ','):
                     token = self.nextToken()
                     if (self.isId(token) or token == 'numero' or token == 'true' or token == 'false'):
-                        return self.listaParametrosChamada(tokenFunc, i)
+                        return self.listaParametrosChamada(tokenFunc, i, lexFunc)
                 elif(token == ')' and i == len(lista)):
+                    self.codigo_intermediario.writelines('tmp'+str(self.indiceTemp)+' := call '+lexFunc+', '+str(i)+'\n')
+                    self.indiceTemp += 1
                     return True
         elif (i == len(lista)):
             if(token == ')'):
+                    self.codigo_intermediario.writelines('tmp'+str(self.indiceTemp)+' := call '+lexFunc+', '+str(i)+'\n')
+                    self.indiceTemp += 1
                     return True
         self.salvarErro("Erro de lista de parametros da chamada da função ou procedimento")
         return False
@@ -335,9 +349,6 @@ class analisadorSintatico():
         codigo = self.tmp+' := '+ esq +' '+ sim + ' ' + dire +'\n'
         self.codigo_intermediario.writelines(codigo)   #escreve o codigo no arquivo
 
-    def escreverIntermParams(self, param):
-
-        self.codigo_intermediario.writelines(linha)
     #monta a string que vai ser escrita no arquivo do codigo de tres endereços
     #e retira os elementos dos vetores ident e simbol
     def tresEnderecos(self, ident, simbol, i):
@@ -625,10 +636,11 @@ class analisadorSintatico():
 
     def _chamarFuncao(self):
         tokenFunc = self.listTokens[self.indice]
+        lexFunc = self.getLexema()
         token = self.nextToken()
         if (token == '('):
             token = self.nextToken()
-            if (self.listaParametrosChamada(tokenFunc, 0)):
+            if (self.listaParametrosChamada(tokenFunc, 0, lexFunc)):
                 token = self.nextToken()
                 return True
 
@@ -637,10 +649,11 @@ class analisadorSintatico():
 
     def _chamarProcedimento(self):
         tokenFunc = self.listTokens[self.indice]
+        lexFunc = self.getLexema()
         token = self.nextToken()
         if (token == '('):
             token = self.nextToken()
-            if (self.listaParametrosChamada(tokenFunc, 0)):
+            if (self.listaParametrosChamada(tokenFunc, 0, lexFunc)):
                 token = self.nextToken()
                 if (token == ';'):
                     return True
