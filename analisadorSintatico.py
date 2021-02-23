@@ -23,9 +23,7 @@ class analisadorSintatico():
         # desvio condicional - codigo intermediario
         self.identResultBool = None # variavel que salva o ultimo identificador, resultado de uma expressao booleana
         self.contadorIf = 0 # conta os if-elifs-else
-        self.corposIf = list() # linhas do codigo intermediario dos corpos dos ifs
-        self.guardarIf = False # flag para guardar o codigo intermediario ao inves de salvalas no arquivo
-        
+        self.desviosAtuais = list() # pilha de desvios condicionais abertos
         self.contadorDesvioCondicional = 0 # conta os desvios condicionais
         
         
@@ -250,10 +248,7 @@ class analisadorSintatico():
                 if(self.expressaoArit(ident, simbol)):
                     self.codeIntermExpArit(tokenIdDir, ident, simbol, 0)
                     codigo = "identIf" + str(self.contadorIf) + " := " + tokenIdEsq + " == " + tokenIdDir + "\n"
-                    if (self.guardarIf):
-                        self.corposIf[self.contadorIf-1].append(codigo)
-                    else:
-                        self.codigo_intermediario.writelines(codigo)
+                    self.codigo_intermediario.writelines(codigo)
                     self.identResultBool = "identIf"+str(self.contadorIf)
                     return True
         
@@ -344,10 +339,7 @@ class analisadorSintatico():
     
     def escreverIntermediarioAtribuicao(self, variavel, temp):
         codigo = variavel+' := '+temp+'\n'
-        if (self.guardarIf): # caso esteja dentro de um if
-            self.corposIf[self.contadorIf-1].append(codigo)
-        else:
-            self.codigo_intermediario.writelines(codigo)
+        self.codigo_intermediario.writelines(codigo)
         self.setValor(variavel, temp)
         print(variavel, temp)
     
@@ -356,10 +348,7 @@ class analisadorSintatico():
         self.tmp = 'tmp'+str(self.indiceTemp)               #tmp atual que será escrito no arquivo
         self.indiceTemp = self.indiceTemp + 1               #incrementa o proximo tmp
         codigo = self.tmp+' := '+ esq +' '+ sim + ' ' + dire +'\n'
-        if (self.guardarIf):
-            self.corposIf[self.contadorIf-1].append(codigo)
-        else:
-            self.codigo_intermediario.writelines(codigo)   #escreve o codigo no arquivo
+        self.codigo_intermediario.writelines(codigo)   #escreve o codigo no arquivo
 
     #monta a string que vai ser escrita no arquivo do codigo de tres endereços
     #e retira os elementos dos vetores ident e simbol
@@ -538,18 +527,14 @@ class analisadorSintatico():
         
         # sequencias de ifs tem mais um if
         self.contadorIf += 1
-        self.corposIf.append(list()) # lista com as linhas do codigo para o corpo do if
         
         if (token == '('):
             token = self.nextToken()
             if (self.expressaoBool(ident, simbol)):
                 
                 # salva a linha de chamada do if aninhado
-                chamadaIf = "if "+str(self.identResultBool)+" goto L"+str(self.contadorIf) + "\n"
-                if (self.guardarIf): # caso o if fique dentro de outro if
-                    self.corposIf[self.contadorIf-1].append(chamadaIf)
-                else:
-                    self.codigo_intermediario.writelines(chamadaIf)
+                chamadaIf = "iffalse "+str(self.identResultBool)+" goto fimIF"+str(self.contadorIf) + "\n"
+                self.codigo_intermediario.writelines(chamadaIf)
                 
                 token = self.listTokens[self.indice]
                 if (token == ')'):
@@ -557,50 +542,38 @@ class analisadorSintatico():
                     self.guardarIf = True # começa a guardar codigo intermediario do corpo
                     if (token == '{'):
                         token = self.nextToken()
-                        while (self._s()):
+                        while (self._s()):                            
                             token = self.nextToken()
                             if (token == '}'):
                                 self.guardarIf = False
                                 self.decrementaContexto()
-                                self.descarregarIf()
+                                # goto para label do desvio condicional e finalizacao do if
+                                self.codigo_intermediario.writelines("goto L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + "\n")
+                                self.codigo_intermediario.writelines("fimIF" + str(self.contadorIf) + ":\n")
+                                self.fecharDesvioCondicional()
                                 return True
+                        
         self.salvarErro("Erro de desvio condicional")
         return False
     
-    ### verifica se nao existe outro condicional, se nao existir descarrega no arquivo tudo que foi armazenado, senão continua incrementando
-    def descarregarIf(self):
+    ### verifica se nao existe outro condicional
+    def fecharDesvioCondicional(self):
         prox_token = self.listTokens[self.indice+1] 
-        if (prox_token != 'ifelse' and prox_token != 'else'): # sequencias de ifs chegam ao fim                                    
-            self.contadorDesvioCondicional += 1 # mais um desvio condicional
-            
-            # ao final do desvio condicional completo, caso nenhum if tenha sido executado, é desviado para o final
-            self.codigo_intermediario.writelines("goto LIF" + str(self.contadorDesvioCondicional) + "\n")
-            
-            for i in range(self.contadorIf):
-                self.codigo_intermediario.writelines("L" + str(i+1) + ":\n")
-                for corpo in self.corposIf[i]: # corpo do if(i+1)
-                    self.codigo_intermediario.writelines(corpo)
-                self.codigo_intermediario.writelines("goto LIF" + str(self.contadorDesvioCondicional) + "\n")
-            self.codigo_intermediario.writelines("LIF" + str(self.contadorDesvioCondicional) + ":\n") # label final do if
-            # zera a sequencia de ifs
-            self.contadorIf = 0
-            self.corposIf = list()
-            
+        if (prox_token != 'ifelse' and prox_token != 'else'): # sequencias de ifs chegam ao fim
+            self.codigo_intermediario.writelines("L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + ":\n") # label final do desvio condicional
+            self.desviosAtuais.pop() # remove o desvio condicional atual da pilha
+        
     
     def _else(self):
         # sequencia de ifs tem mais um
         self.contadorIf += 1
-        self.corposIf.append(list()) # lista com as linhas do codigo para o corpo do if
         
         token = self.nextToken()
         self.incrementarContexto()
         
         # salva a linha de chamada do if aninhado
-        chamadaIf = "goto L"+str(self.contadorIf) + "\n"
-        if (self.guardarIf): # caso o if fique dentro de outro if
-            self.corposIf[self.contadorIf-1].append(chamadaIf)
-        else:
-            self.codigo_intermediario.writelines(chamadaIf)
+        #chamadaIf = "goto L"+str(self.contadorIf) + "\n"
+        #self.codigo_intermediario.writelines(chamadaIf)
         
         self.guardarIf = True
         if (token == '{'):
@@ -608,9 +581,10 @@ class analisadorSintatico():
             while (self._s()):
                 token = self.nextToken()
                 if (token == '}'):
-                    self.guardarIf = False
                     self.decrementaContexto()
-                    self.descarregarIf()
+                    self.codigo_intermediario.writelines("goto L_IF" + str(self.desviosAtuais[len(self.desviosAtuais)-1]) + "\n")
+                    self.codigo_intermediario.writelines("fimIF" + str(self.contadorIf) + ":\n")
+                    self.fecharDesvioCondicional()
                     return True
         self.salvarErro("Erro de desvio condicional")
         return False
@@ -627,11 +601,12 @@ class analisadorSintatico():
         
         if (token == '('):
             token = self.nextToken()
+            self.codigo_intermediario.writelines(labelInicio + ":\n")
             ehExpBool = self.expressaoBool(ident, simbol)
             if (ehExpBool):
                 token = self.listTokens[self.indice]    
                 if (token == ')'):
-                    self.codigo_intermediario.writelines(labelInicio + ":\n")
+                    #self.codigo_intermediario.writelines(labelInicio + ":\n")
                     self.contadorWhile += 1 # contador while usa dois labels, um para cotinuar e outro para sair
                     labelSaida += str(self.contadorWhile)
                     self.codigo_intermediario.writelines("iffalse " + str(self.identResultBool) + " goto " + labelSaida + "\n")
@@ -710,6 +685,8 @@ class analisadorSintatico():
             return self._print()
         
         if (token == 'if'):
+            self.contadorDesvioCondicional += 1
+            self.desviosAtuais.append(self.contadorDesvioCondicional) # adiciona o desvio condicional atual na pilha
             return self._if()
 
         if (token == 'ifelse'): # o corpo do if eh parecido
