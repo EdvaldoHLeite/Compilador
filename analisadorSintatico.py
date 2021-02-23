@@ -147,14 +147,15 @@ class analisadorSintatico():
         if (tokFun != -1 and tok != -1):               
             self.tabelaSimbolos[tokFun].parametros.append(tok)
 
-    #retorna true se o token passado como parametro for um operador boleano
-    def operadorBool(self):
-        token = self.listTokens[self.indice]
-
+    def isOperadorBool(self, simbol):
         operadores = "== != > >= < <= = !"
-        if token in operadores.split():
+        if simbol in operadores.split():
             return True
         return False
+
+    #retorna true se o token passado como parametro for um operador boleano
+    def operadorBool(self):
+        return self.isOperadorBool(self.listTokens[self.indice])
 
     #retorna true se o token passado como parametro for umoperador aritimetico
     def operadorArit(self):
@@ -377,6 +378,10 @@ class analisadorSintatico():
             else:
                 i = i+1
         
+        #no caso de expressões boleanas, "sobram" 2 elementos em ident e um em simbol (o operador boleano)
+        if (len(simbol) == 1 and self.isOperadorBool(simbol[0]) and len(ident) == 2):
+            self.tresEnderecos(ident, simbol, 0)
+
         if (len(simbol) == 0 and len(ident) == 1):
             self.escreverIntermediarioAtribuicao(token, ident[0])       #escreve a ultima linha do codigo de três endereços para a expressão
         else:
@@ -681,8 +686,8 @@ class analisadorSintatico():
         self.arquivo_entrada.close()
         self.arquivo_saida.close()  
 
-        for i in self.tabelaSimbolos:
-            print(i.lexema+' ----- valor = ' +i.valor)
+        #for i in self.tabelaSimbolos:
+        #    print(i.lexema+' ----- valor = ' +i.valor)
 
 analisador = analisadorSintatico()
 analisador.inicio()
